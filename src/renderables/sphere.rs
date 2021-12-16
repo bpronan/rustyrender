@@ -1,8 +1,7 @@
-use crate::ray::HitRecord;
-use crate::ray::Hittable;
-use crate::ray::Ray;
-use crate::vector;
-use crate::vector::Point3;
+use crate::core::vector;
+use crate::core::ray::Ray;
+use crate::renderables::world::{ HitRecord, Hittable };
+use crate::core::vector::Point3;
 
 pub struct Sphere {
     pub center: Point3,

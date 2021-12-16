@@ -1,18 +1,6 @@
-use crate::vector;
-use crate::vector::Point3;
-use crate::vector::Vec3;
-
-#[derive(Copy, Clone)]
-pub struct Ray {
-    pub orig: Point3,
-    pub dir: Vec3,
-}
-
-impl Ray {
-    pub fn at(self, t: f32) -> Point3 {
-        self.orig + self.dir * t
-    }
-}
+use crate::core::ray::Ray;
+use crate::core::vector;
+use crate::core::vector::{ Point3, Vec3, Color };
 
 #[derive(Copy, Clone)]
 pub struct HitRecord {
@@ -65,15 +53,32 @@ impl Hittable for HittableList {
     }
 }
 
-#[test]
-fn test_rays() {
-    let r = Ray {
-        orig: Point3::new(1.0, 2.0, 3.0),
-        dir: Vec3::new(1.0, 2.0, 3.0),
+
+pub fn ray_color(r: &Ray, world: &dyn Hittable, depth: u32) -> Color {
+    let mut rec = HitRecord {
+        p: Point3::new(0.0, 0.0, 0.0),
+        normal: Vec3::new(0.0, 0.0, 0.0),
+        t: f32::INFINITY,
+        front_face: false,
     };
 
-    let v = r.at(2.0);
-    assert_eq!(3.0, v.x());
-    assert_eq!(6.0, v.y());
-    assert_eq!(9.0, v.z());
+    if depth == 0 {
+        return Color::new(0.0, 0.0, 0.0);
+    }
+
+    if world.hit(r, 0.001, f32::INFINITY, &mut rec) {
+        let target = rec.p + rec.normal + vector::random_in_unit_sphere();
+        return ray_color(
+            &Ray {
+                orig: rec.p,
+                dir: target - rec.p,
+            },
+            world,
+            depth - 1,
+        ) * 0.5;
+    }
+
+    let unit_direction = vector::unit_vector(&r.dir);
+    let t = 0.5 * (unit_direction.y() + 1.0);
+    return Color::new(1.0, 1.0, 1.0) * (1.0 - t) + Color::new(0.5, 0.7, 1.0) * t;
 }
