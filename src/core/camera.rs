@@ -2,6 +2,7 @@ use super::ray::Ray;
 use super::vector::{ Point3, Vec3 };
 
 
+#[derive(Copy, Clone, Debug)]
 pub struct Camera {
     origin: Point3,
     ll_corner: Point3,

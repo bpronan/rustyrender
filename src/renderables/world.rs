@@ -1,6 +1,9 @@
 use crate::core::ray::Ray;
 use crate::core::vector;
 use crate::core::vector::{ Point3, Vec3, Color };
+use std::sync::Arc;
+
+use crate::renderables::sphere::Sphere;
 
 #[derive(Copy, Clone)]
 pub struct HitRecord {
@@ -20,6 +23,13 @@ impl HitRecord {
             self.normal = -(*outward_normal);
         }
     }
+
+    pub fn reset(&mut self) {
+        self.p = Point3::new(0.0, 0.0, 0.0);
+        self.normal = Vec3::new(0.0, 0.0, 0.0);
+        self.t = f32::INFINITY;
+        self.front_face = false;
+    }
 }
 
 pub trait Hittable {
@@ -27,7 +37,35 @@ pub trait Hittable {
 }
 
 pub struct HittableList {
-    pub objects: Vec<Box<dyn Hittable>>,
+    pub objects: Vec<Arc<dyn Hittable>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct SphereWorld {
+    pub objects: Vec<Sphere>,
+}
+
+impl Hittable for SphereWorld {
+    fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {
+        let mut hit_temp = HitRecord {
+            p: Point3::new(0.0, 0.0, 0.0),
+            normal: Vec3::new(0.0, 0.0, 0.0),
+            t: f32::INFINITY,
+            front_face: false,
+        };
+        let mut hit_anything = false;
+        let mut closest_so_far = t_max;
+
+        for hittable in &self.objects {
+            if hittable.hit(r, t_min, closest_so_far, &mut hit_temp) {
+                hit_anything = true;
+                closest_so_far = hit_temp.t;
+                *rec = hit_temp;
+            }
+        }
+
+        hit_anything
+    }
 }
 
 impl Hittable for HittableList {
@@ -54,6 +92,8 @@ impl Hittable for HittableList {
 }
 
 
+
+// TODO remove this bad boy
 pub fn ray_color(r: &Ray, world: &dyn Hittable, depth: u32) -> Color {
     let mut rec = HitRecord {
         p: Point3::new(0.0, 0.0, 0.0),

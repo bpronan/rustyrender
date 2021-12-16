@@ -1,4 +1,3 @@
-
 mod core;
 mod execute;
 mod io;
@@ -15,6 +14,7 @@ use crate::core::camera::Camera;
 use std::env;
 use std::error::Error;
 
+
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // TODO magic numbers
     let aspect_ratio = 16.0 / 9.0;
@@ -23,7 +23,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     let samples_per_pixel = 10;
     let max_depth = 50;
 
-    let file_parser = FileReaderFactory::get_file_processor(&config.input_file)
+    let file_parser = FileReaderFactory::get_file_processor(&"world.json".to_string())
         .expect("Couldn't retrieve file parser");
     let world = file_parser.process_file();
 
@@ -31,15 +31,31 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     // camera
 
-    let mut img_buf = vec![0_u8; (imgx * imgy * 3) as usize];
-    renderloop::renderloop(
-        RenderContext::new(&mut img_buf, 
+    use std::time::{Duration, Instant};
+
+    // let start = Instant::now();
+    // let flat_buffer = renderloop::renderloop(
+    //     &RenderContext::new( 
+    //         Camera::new(2.0, 2.0 * aspect_ratio, 1.0, imgx, imgy), 
+    //         max_depth, samples_per_pixel, 0, 0, imgx, imgy
+    //     ), &world
+    // );
+    // let duration = start.elapsed();
+    // info!("Flat execution time: {:?}", duration);
+
+
+    let start = Instant::now();
+    let flat_buffer = renderloop::renderloop_concurrent(
+        &RenderContext::new( 
             Camera::new(2.0, 2.0 * aspect_ratio, 1.0, imgx, imgy), 
-            world, max_depth, samples_per_pixel, 0, 0, imgx, imgy
-        )
+            max_depth, samples_per_pixel, 0, 0, imgx, imgy
+        ), &world
     );
-    
-    image::write_image_to_file(config.output_file, &img_buf, imgx as usize, imgy as usize);
+    let duration = start.elapsed();
+    info!("Concurrent execution time: {:?}", duration);
+
+
+    image::write_image_to_file("output/render0.png".to_string(), &flat_buffer, imgx as usize, imgy as usize);
 
     Ok(())
 }

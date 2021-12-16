@@ -3,6 +3,7 @@ use crate::core::ray::Ray;
 use crate::renderables::world::{ HitRecord, Hittable };
 use crate::core::vector::Point3;
 
+#[derive(Copy, Clone, Debug)]
 pub struct Sphere {
     pub center: Point3,
     pub radius: f32,

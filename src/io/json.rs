@@ -1,12 +1,13 @@
 use super::SceneLoader;
 
-use crate::renderables::world::HittableList;
+use crate::renderables::world::{ HittableList, SphereWorld };
 use crate::renderables::sphere::Sphere;
 use crate::core::vector::Point3;
 
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::sync::Arc;
 
 pub struct JSONSceneLoader {
     filename: String,
@@ -20,7 +21,7 @@ impl JSONSceneLoader {
 
 impl SceneLoader for JSONSceneLoader {
 
-    fn process_file(&self) -> HittableList {
+    fn process_file(&self) -> SphereWorld {
         info!("Parsing world filename {}", self.filename);
         
         #[derive(Debug, Deserialize, Serialize)] struct DemoObjectStruct {
@@ -56,15 +57,26 @@ impl SceneLoader for JSONSceneLoader {
             .expect("Incorrect JSON format");
     
         // World
-        let mut world = HittableList {
+        // let mut world = HittableList {
+        //     objects: Vec::new(),
+        // };
+
+        // for object in world_object.objects {
+        //     world.objects.push(Arc::new(Sphere {
+        //         center: Point3::new(object.center.x, object.center.y, object.center.z),
+        //         radius: object.radius,
+        //     }));    
+        // }
+
+        let mut world = SphereWorld {
             objects: Vec::new(),
         };
 
         for object in world_object.objects {
-            world.objects.push(Box::new(Sphere {
+            world.objects.push(Sphere {
                 center: Point3::new(object.center.x, object.center.y, object.center.z),
                 radius: object.radius,
-            }));    
+            });
         }
 
         world
