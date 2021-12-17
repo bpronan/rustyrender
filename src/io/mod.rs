@@ -1,5 +1,4 @@
 mod json;
-pub mod image;
 
 use crate::renderables::world::HittableList;
 
@@ -12,8 +11,7 @@ use std::path::Path;
 
 /// Interface for all scene file loaders. 
 pub trait SceneLoader {
-    //fn process_file(&self) -> HittableList;
-    fn process_file(&self) -> crate::renderables::world::SphereWorld;
+    fn process_file(&self) -> HittableList;
 }
 
 pub struct FileReaderFactory;

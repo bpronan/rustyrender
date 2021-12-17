@@ -3,59 +3,60 @@ mod execute;
 mod io;
 mod renderables;
 
-use log::info;
 
 use crate::execute::context::RenderContext;
 use crate::execute::renderloop;
 use crate::io::FileReaderFactory;
-use crate::io::image;
 use crate::core::camera::Camera;
 
+use image::{ImageBuffer, RgbImage};
+use log::{info, error};
 use std::env;
 use std::error::Error;
+use std::time::{Instant};
 
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // TODO magic numbers
     let aspect_ratio = 16.0 / 9.0;
-    let imgx: u32 = 400;
+    let imgx: u32 = 1920;
     let imgy: u32 = ((imgx as f32) / aspect_ratio) as u32;
     let samples_per_pixel = 10;
     let max_depth = 50;
 
-    let file_parser = FileReaderFactory::get_file_processor(&"world.json".to_string())
+    let file_parser = FileReaderFactory::get_file_processor(&config.input_file)
         .expect("Couldn't retrieve file parser");
     let world = file_parser.process_file();
 
     info!("World successfully built!");
 
-    // camera
-
-    use std::time::{Duration, Instant};
-
-    // let start = Instant::now();
-    // let flat_buffer = renderloop::renderloop(
-    //     &RenderContext::new( 
-    //         Camera::new(2.0, 2.0 * aspect_ratio, 1.0, imgx, imgy), 
-    //         max_depth, samples_per_pixel, 0, 0, imgx, imgy
-    //     ), &world
-    // );
-    // let duration = start.elapsed();
-    // info!("Flat execution time: {:?}", duration);
-
+    let mut img: RgbImage = ImageBuffer::new(imgx, imgy);
 
     let start = Instant::now();
-    let flat_buffer = renderloop::renderloop_concurrent(
+    renderloop::renderloop(
         &RenderContext::new( 
             Camera::new(2.0, 2.0 * aspect_ratio, 1.0, imgx, imgy), 
             max_depth, samples_per_pixel, 0, 0, imgx, imgy
-        ), &world
+        ), &world, &mut img
     );
+    let duration = start.elapsed();
+    info!("Flat execution time: {:?}", duration);
+
+
+    let start = Instant::now();
+    match renderloop::renderloop_concurrent(
+        &RenderContext::new( 
+            Camera::new(2.0, 2.0 * aspect_ratio, 1.0, imgx, imgy), 
+            max_depth, samples_per_pixel, 0, 0, imgx, imgy
+        ), &world, &mut img
+    ) {
+        Err(e) => error!("{:?}", e),
+        _ => ()
+    }
     let duration = start.elapsed();
     info!("Concurrent execution time: {:?}", duration);
 
-
-    image::write_image_to_file("output/render0.png".to_string(), &flat_buffer, imgx as usize, imgy as usize);
+    img.save(&config.output_file).expect("Could not write output file");
 
     Ok(())
 }

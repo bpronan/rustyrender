@@ -1,9 +1,5 @@
-use crate::renderables::world::HittableList;
 use crate::core::camera::Camera;
 
-use std::sync::Arc;
-
-#[derive(Copy, Clone, Debug)]
 pub struct RenderContext {
     pub camera: Camera,
     pub max_depth: u32,
@@ -21,5 +17,3 @@ impl RenderContext {
         RenderContext { camera, max_depth, samples, start_x, start_y, end_x, end_y }
     }
 }
-
-unsafe impl Send for RenderContext {}

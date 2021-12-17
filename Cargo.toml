@@ -10,12 +10,10 @@ debug = true
 
 [dependencies]
 image = "0.23.14"
-num-complex = "0.4.0"
 rand = "0.8.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 log = "0.4.14"
-threadpool = "1.8.1"
 num_cpus = "1.13.0"
 crossbeam = "0.8"
 time = "*"
