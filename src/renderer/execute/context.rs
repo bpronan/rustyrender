@@ -1,4 +1,4 @@
-use crate::core::camera::Camera;
+use crate::renderer::scene::camera::Camera;
 
 pub struct RenderContext {
     pub camera: Camera,

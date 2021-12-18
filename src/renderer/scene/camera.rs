@@ -1,5 +1,5 @@
-use super::ray::Ray;
-use super::vector::{ Point3, Vec3 };
+use crate::renderer::core::ray::Ray;
+use crate::renderer::core::vector::{ Point3, Vec3 };
 
 
 #[derive(Copy, Clone, Debug)]

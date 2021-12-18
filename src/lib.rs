@@ -1,86 +1,89 @@
-mod core;
-mod execute;
-mod io;
-mod renderables;
 
-
-use crate::execute::context::RenderContext;
-use crate::execute::renderloop;
-use crate::io::FileReaderFactory;
-use crate::core::camera::Camera;
 
 use image::{ImageBuffer, RgbImage};
-use log::{info, error};
-use std::env;
-use std::error::Error;
-use std::time::{Instant};
+use log::info;
 
+use anyhow::Context;
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
-    // TODO magic numbers
-    let aspect_ratio = 16.0 / 9.0;
-    let imgx: u32 = 1920;
-    let imgy: u32 = ((imgx as f32) / aspect_ratio) as u32;
-    let samples_per_pixel = 10;
-    let max_depth = 50;
+mod renderer;
+mod parser;
 
-    let file_parser = FileReaderFactory::get_file_processor(&config.input_file)
-        .expect("Couldn't retrieve file parser");
-    let world = file_parser.process_file();
+use crate::parser::FileReaderFactory;
+use renderer::ComputeEnv;
 
+/// The usage string on which docopt will base the argument
+/// parsing. 
+/// 
+/// Note: This should really be in main.rs instead of here.
+/// It is in this file and not in main.rs for no other reason 
+/// than that it wouldn't work with my weak Rust programming skills.
+pub const USAGE: &str = "
+Usage: rustyrender [options] <source> <dest>
+       rustyrender --help
+
+A simple renderer written in rust. 
+
+Supported compute environments are:
+    naive       A naive compute implementation.
+    multicore   Parallelizes across cores on the CPU
+    cuda        GP GPU based renderer using CUDA. Only supported on nVidia.
+    opencl      OpenGL based renderer.
+
+Options:
+    -h, --help          Show this message.
+    --compute <arg>     The environment to use on this machine.
+    --width <arg>       The width of the output image. [default: 1920]
+    --height <arg>      The height of the output image. [default: 1080]
+    --samples <arg>     The number of antialiasing samples per pixel. [default: 10]
+    --depth <arg>       The maximum depth of the ray recursion. [default: 50]
+";
+
+/// The struct definition for deserializing the data. 
+/// 
+/// Note: Like the above, this should really be in main.rs instead of here.
+/// It is in this file and not in main.rs for no other reason 
+/// than that it wouldn't work with my weak Rust programming skills.
+#[derive(serde::Deserialize)]
+pub struct Args {
+    arg_source: String,
+    arg_dest: String,
+    flag_compute: Option<ComputeEnv>,
+    flag_width: isize,
+    flag_height: isize,
+    flag_samples: isize,
+    flag_depth: isize,
+}
+
+/// The run function is called from 'main()'. 
+/// 
+/// It opens up the scene file, creates the necessary memory, 
+/// renders the image, and saves to the output file.
+/// 
+/// It also annotates the errors from the scene parsing and 
+/// rendering and propagates them upwards to 'main()' where 
+/// they will be handled.
+pub fn run(args: &Args) -> anyhow::Result<()> {
+
+    let imgx: u32 = args.flag_width as u32;
+    let imgy: u32 = args.flag_height as u32;
+    let samples_per_pixel = args.flag_samples as u32;
+    let max_depth = args.flag_depth as u32;
+    let compute_env = match args.flag_compute {
+        Some(s) => s,
+        None => ComputeEnv::Multicore
+    };
+
+    let file_parser = FileReaderFactory::get_file_processor(&args.arg_source)?;
+    let world = file_parser.process_file()?;
     info!("World successfully built!");
 
     let mut img: RgbImage = ImageBuffer::new(imgx, imgy);
+    info!("Output image buffer created.");
 
-    let start = Instant::now();
-    renderloop::renderloop(
-        &RenderContext::new( 
-            Camera::new(2.0, 2.0 * aspect_ratio, 1.0, imgx, imgy), 
-            max_depth, samples_per_pixel, 0, 0, imgx, imgy
-        ), &world, &mut img
-    );
-    let duration = start.elapsed();
-    info!("Flat execution time: {:?}", duration);
+    renderer::render(compute_env, samples_per_pixel, max_depth, &world, &mut img)?;
 
-
-    let start = Instant::now();
-    match renderloop::renderloop_concurrent(
-        &RenderContext::new( 
-            Camera::new(2.0, 2.0 * aspect_ratio, 1.0, imgx, imgy), 
-            max_depth, samples_per_pixel, 0, 0, imgx, imgy
-        ), &world, &mut img
-    ) {
-        Err(e) => error!("{:?}", e),
-        _ => ()
-    }
-    let duration = start.elapsed();
-    info!("Concurrent execution time: {:?}", duration);
-
-    img.save(&config.output_file).expect("Could not write output file");
+    info!("Saving output to {}", args.arg_dest);
+    img.save(&args.arg_dest)?;
 
     Ok(())
-}
-
-pub struct Config {
-    input_file: String,
-    output_file: String,
-}
-
-pub fn usage() {
-    println!("Usage: {} input_file output_file", 
-        env!("CARGO_PKG_NAME"));
-
-}
-
-impl Config {
-    pub fn new(args: &[String]) -> Result<Config, &str> {
-        if args.len() < 3 {
-            return Err("Not enough arguments");
-        }
-
-        let input_file = args[1].clone();
-        let output_file = args[2].clone();
-
-        Ok(Config { input_file, output_file })
-    }
 }

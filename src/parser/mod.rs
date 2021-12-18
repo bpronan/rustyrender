@@ -1,6 +1,8 @@
 mod json;
+pub mod error;
 
-use crate::renderables::world::HittableList;
+use crate::renderer::scene::world::HittableList;
+use crate::parser::error::ParserError;
 
 use json::JSONSceneLoader;
 
@@ -8,10 +10,11 @@ use log::{info, error};
 use std::ffi::OsStr;
 use std::path::Path;
 
+type BoxResult<T> = Result<T, ParserError>;
 
 /// Interface for all scene file loaders. 
 pub trait SceneLoader {
-    fn process_file(&self) -> HittableList;
+    fn process_file(&self) -> BoxResult<HittableList>;
 }
 
 pub struct FileReaderFactory;
@@ -20,7 +23,7 @@ impl FileReaderFactory {
     /// Factory method for creating a scene loader based on the file type
     /// add a new arm to the extension matching block to add support for 
     /// different file types.
-    pub fn get_file_processor(filename: &String) -> Result<Box<dyn SceneLoader>, &'static str> {
+    pub fn get_file_processor(filename: &String) -> BoxResult<Box<dyn SceneLoader>> {
 
         info!("Opening file {}", filename.to_string());
 
@@ -45,6 +48,6 @@ impl FileReaderFactory {
 
 
         error!("{}", msg);
-        return Err(msg)
+        return Err(ParserError::FileExtensionError);
     }
 }

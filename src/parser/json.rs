@@ -1,12 +1,15 @@
 use super::SceneLoader;
 
-use crate::renderables::world::HittableList;
-use crate::renderables::sphere::Sphere;
-use crate::core::vector::Point3;
+use crate::renderer::core::vector::Point3;
+use crate::renderer::scene::world::HittableList;
+use crate::renderer::scene::sphere::Sphere;
 
 use log::info;
 use serde::{Deserialize, Serialize};
 use std::fs;
+
+use crate::parser::BoxResult;
+use crate::parser::error::ParserError;
 
 pub struct JSONSceneLoader {
     filename: String,
@@ -18,17 +21,11 @@ impl JSONSceneLoader {
     }
 }
 
+
 impl SceneLoader for JSONSceneLoader {
 
-    fn process_file(&self) -> HittableList {
+    fn process_file(&self) -> BoxResult<HittableList> {
         info!("Parsing world filename {}", self.filename);
-        
-        #[derive(Debug, Deserialize, Serialize)] struct DemoObjectStruct {
-            rolno: usize,
-            name: String,
-            city: String,
-            salary: usize,
-        }
     
         #[derive(Debug, Deserialize, Serialize)] struct LocationStruct {
             x: f32,
@@ -49,11 +46,10 @@ impl SceneLoader for JSONSceneLoader {
         // TODO: Get rid of this clone call
         // TODO: move the read file out of this call. breaks single 
         // responsibility principle.
-        let contents = fs::read_to_string(self.filename.clone())
-            .expect("Invalid input file");
+        let contents = fs::read_to_string(self.filename.clone())?;
         
         let world_object: WorldStruct = serde_json::from_str(&contents)
-            .expect("Incorrect JSON format");
+            .map_err(|source| ParserError::FormatCorrupted{ source })?;
     
         // World
         let mut world = HittableList {
@@ -67,6 +63,6 @@ impl SceneLoader for JSONSceneLoader {
             }));    
         }
 
-        world
+        Ok(world)
     }
 }

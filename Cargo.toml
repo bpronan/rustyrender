@@ -1,9 +1,8 @@
 [package]
 name = "rustyrender"
 version = "0.1.0"
+authors = ["Brian Ronan <bpronan@gmail.com>"]
 edition = "2018"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [profile.release]
 debug = true
@@ -17,3 +16,6 @@ log = "0.4.14"
 num_cpus = "1.13.0"
 crossbeam = "0.8"
 time = "*"
+thiserror = "1.0.30"
+anyhow = "1.0.51"
+docopt = "1.1.1"

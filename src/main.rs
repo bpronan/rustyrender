@@ -1,18 +1,19 @@
 extern crate image;
 
-use rustyrender::Config;
+use rustyrender::{Args, USAGE};
 
 use log::error;
-
 use log::{Record, Level, Metadata};
 use log::{LevelFilter};
+use docopt::Docopt;
 
+/// A simple logger that outputs stdout. 
+/// 
+/// In a more advanced runtime environment, we would want to write 
+/// these messages to disk or send to a monitoring service.
 struct SimpleLogger;
 
 static LOGGER: SimpleLogger = SimpleLogger;
-
-use std::env;
-use std::process;
 
 impl log::Log for SimpleLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
@@ -30,19 +31,16 @@ impl log::Log for SimpleLogger {
 
 
 fn main() {
+    // All info and error calls will go to the simple logger defined above.
     log::set_logger(&LOGGER)
         .map(|()| log::set_max_level(LevelFilter::Info)).unwrap();
 
-    let args: Vec<String> = env::args().collect();
+    let args: &Args = &Docopt::new(USAGE)
+        .and_then(|d| d.deserialize())
+        .unwrap_or_else(|e| e.exit());
 
-    let config = Config::new(&args).unwrap_or_else(|err| {
-        error!("{}", err);
-        rustyrender::usage();
-        process::exit(0);
-    });
-
-    if let Err(e) = rustyrender::run(config) {
-        println!("Application error: {}", e);
-        process::exit(1);
+    if let Err(e) = rustyrender::run(args) {
+        error!("Application error: {}", e);
+        std::process::exit(1);
     }
 }

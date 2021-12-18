@@ -1,8 +1,8 @@
-use crate::core::ray::Ray;
-use crate::core::vector;
-use crate::core::vector::{ Point3, Vec3 };
+use crate::renderer::core::ray::Ray;
+use crate::renderer::core::vector;
+use crate::renderer::core::vector::{ Point3, Vec3 };
 
-use crate::renderables::sphere::Sphere;
+use crate::renderer::scene::sphere::Sphere;
 
 // TODO: See about this
 #[derive(Copy, Clone)]
