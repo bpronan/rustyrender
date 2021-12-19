@@ -47,7 +47,7 @@ The `--lib` flag is necessary because of compile failures in the example documen
 The program currently only supports a custom JSON file format to specify the scene file. The schema is the following:
 ```json
 {
-    "background": { "x": 0.5, "y": 0.7, "z": 1.0 }, // the background color for a sky calculation
+    "background": { "x": 0.5, "y": 0.7, "z": 1.0 },
     "spheres": [
         {
             "center": { "x": 0.0, "y": 0.0, "z": -1.0 }, 
@@ -61,6 +61,8 @@ The program currently only supports a custom JSON file format to specify the sce
     ]
 }
 ```
+
+The background is a color used to render the sky gradient, it represents the color at the zenith. The horizon will be white.
 
 ## Project Organization
 
