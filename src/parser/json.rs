@@ -1,5 +1,6 @@
 use super::SceneLoader;
 
+use crate::renderer::core::color::Color;
 use crate::renderer::core::vector::Point3;
 use crate::renderer::scene::world::Region;
 use crate::renderer::scene::objects::sphere::Sphere;
@@ -67,6 +68,7 @@ impl SceneLoader for JSONSceneLoader {
         // a week and compared to formats like obj, fbx, collada, 
         // and renderman.
         #[derive(Debug, Deserialize, Serialize)] struct WorldStruct {
+            background: Color,
             spheres: Vec<Sphere>,
         }
     
@@ -76,7 +78,7 @@ impl SceneLoader for JSONSceneLoader {
             .map_err(|source| ParserError::FormatCorruptedError{ source })?;
     
         // World
-        let mut world = Region::new();
+        let mut world = Region::new(world_object.background);
 
         for object in world_object.spheres {
             world.push(Box::new(Sphere {

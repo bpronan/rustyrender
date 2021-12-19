@@ -1,4 +1,5 @@
 {
+    "background": { "x": 0.5, "y": 0.7, "z": 1.0 },
     "spheres": [
         {
             "geometry": "sphere",
