@@ -12,6 +12,7 @@ use thiserror::Error;
 use crate::renderer::execute::context::RenderContext;
 use crate::renderer::execute::cpurender;
 use crate::renderer::execute::gpurender;
+use crate::renderer::execute::render_op;
 use crate::renderer::scene::camera::Camera;
 
 use image::RgbImage;
@@ -130,7 +131,7 @@ pub fn render(env: ComputeEnv, samples_per_pixel: u32, max_depth: u32,
     match env {
         ComputeEnv::Naive => {
             info!("Executing naive implementation.");
-            cpurender::render_naive(&context, &world, img_buf);
+            cpurender::render_naive(&context, &world, img_buf, render_op::render_pixel);
         },
         ComputeEnv::Cuda => {
             info!("Executing CUDA implementation.");
@@ -142,7 +143,7 @@ pub fn render(env: ComputeEnv, samples_per_pixel: u32, max_depth: u32,
         },
         _ => {
             info!("Executing Mulithreading implementation.");
-            cpurender::render_threaded(&context, &world, img_buf)?
+            cpurender::render_threaded(&context, &world, img_buf, render_op::render_pixel)?
         },
     };
     info!("Rendering execution time: {:?}", start.elapsed());

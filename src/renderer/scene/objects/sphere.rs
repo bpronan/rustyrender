@@ -16,11 +16,17 @@ pub struct Sphere {
 }
 
 impl Hittable for Sphere {
+
+    /// Calculates a sphere hit.
+    /// Solves dot((r.orig + t * r.dir - center), (r.orig + t * r.dir - center)) = r^2 to do so.
     fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {
+
         let oc = r.orig - self.center;
         let a = r.dir.length_squared();
         let half_b = vector::dot(&oc, &r.dir);
         let c = oc.length_squared() - self.radius * self.radius;
+
+        // slightly optimized quadric solve
         let discriminant = half_b * half_b - a * c;
 
         if discriminant < 0.0 {
@@ -37,6 +43,7 @@ impl Hittable for Sphere {
             }
         }
 
+        // update the hit record
         rec.t = root;
         rec.p = r.at(rec.t);
         let outward_normal = (rec.p - self.center) / self.radius;
@@ -56,10 +63,10 @@ mod tests {
     use crate::renderer::core::vector::Vec3;
 
     #[test]
-    fn test_sphere() {
+    fn test_sphere_hit() {
         let mut rec = HitRecord::new();
 
-        let mut s1 = Sphere{ center: Point3::new(0.0, 0.0, -10.0), radius: 5.0 };
+        let s1 = Sphere{ center: Point3::new(0.0, 0.0, -10.0), radius: 5.0 };
         let r = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
         assert!(s1.hit(&r, 0.001, f32::INFINITY, &mut rec));
 

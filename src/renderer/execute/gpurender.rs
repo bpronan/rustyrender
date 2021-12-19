@@ -15,7 +15,7 @@ pub fn render_cuda(context: &RenderContext,
     // to fall back in case the user isn't on a nVidia card.
     warn!("CUDA not supported yet, reverting to multithreaded CPU.");
 
-    super::cpurender::render_threaded(context, world, img)?;
+    super::cpurender::render_threaded(context, world, img, super::render_op::render_pixel)?;
 
     Ok(())
 }
@@ -30,7 +30,7 @@ pub fn render_opencl(context: &RenderContext,
     // to fall back in case the user isn't on an OpenCL environment.
     warn!("OpenCL not supported yet, reverting to multithreaded CPU.");
 
-    super::cpurender::render_threaded(context, world, img)?;
+    super::cpurender::render_threaded(context, world, img, super::render_op::render_pixel)?;
     
     Ok(())
 }

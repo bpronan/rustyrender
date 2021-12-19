@@ -1,4 +1,5 @@
 use crate::renderer::core::debug_check;
+use crate::renderer::core::color::Color;
 use crate::renderer::scene::world::Region;
 
 use log::error;
@@ -9,7 +10,9 @@ use std::sync::mpsc;
 
 use super::context::RenderContext;
 use super::error::ComputeError;
-use super::util;
+use super::render_op;
+
+type RenderPixelOp = fn(&RenderContext, &Region, usize, usize) -> Color;
 
 /// Renders the multicore version of the algorithm using a set of n threads
 /// and a mpsc channel to collect the pixels into the output.
@@ -20,11 +23,10 @@ use super::util;
 /// * `img` - The image buffer to write to.
 pub fn render_threaded(context: &RenderContext, 
     world: &Region, 
-    img: &mut RgbImage) -> Result<(), ComputeError> {
+    img: &mut RgbImage, render_op: RenderPixelOp) -> Result<(), ComputeError> {
 
     // already covered by checks on the public api, but here to keep the internal behavior 
     // consistency
-    debug_check!(world.objects.len() > 0);
     debug_check!(img.width() > 0);
     debug_check!(img.height() > 0);
 
@@ -34,13 +36,14 @@ pub fn render_threaded(context: &RenderContext,
     let w = ctx_arc.camera.film_width;
     let h = ctx_arc.camera.film_height;
 
-    let cpus = num_cpus::get() as u32;
+    // we don't want to create more threads than slices
+    let threads = std::cmp::min(num_cpus::get() as u32, w);
 
     let (tx, rx) = mpsc::channel();
 
     crossbeam::scope(|scope| {
-        for n in 0..cpus {
-            let lenx = w / cpus;
+        for n in 0..threads {
+            let lenx = w / threads;
             let leny = h;
             let world = wrld_arc.clone();
             let ctx = ctx_arc.clone();
@@ -50,12 +53,12 @@ pub fn render_threaded(context: &RenderContext,
                 for x in n*lenx..(n+1)*lenx {
                     for y in 0..leny {
 
-                        let pixel = util::render_pixel(&ctx, &world, x as usize, y as usize);
+                        let pixel = render_op(&ctx, &world, x as usize, y as usize);
 
                         // REVIEW: would love to turn this into a macro, if only there were time.
-                        let r = (util::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
-                        let g = (util::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
-                        let b = (util::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
+                        let r = (render_op::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
+                        let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
+                        let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
                         tx.send((x, y, Rgb([r, g, b]))).unwrap();
 
                     }
@@ -87,11 +90,10 @@ pub fn render_threaded(context: &RenderContext,
 /// * `context` - The render context that contains the information necessary to render the image.
 /// * `world` - The scene to render.
 /// * `img` - The image buffer to write to.
-pub fn render_naive(context: &RenderContext, world: &Region, img: &mut RgbImage) {
+pub fn render_naive(context: &RenderContext, world: &Region, img: &mut RgbImage, render_op: RenderPixelOp) {
 
     // already covered by checks on the public api, but here to keep the internal 
     // consistency
-    debug_check!(world.objects.len() > 0);
     debug_check!(img.width() > 0);
     debug_check!(img.height() > 0);
 
@@ -102,11 +104,11 @@ pub fn render_naive(context: &RenderContext, world: &Region, img: &mut RgbImage)
 
     for y in s_y..e_y {
         for x in s_x..e_x {
-            let pixel = util::render_pixel(context, world, x as usize, y as usize);
+            let pixel = render_op(context, world, x as usize, y as usize);
 
-            let r = (util::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
-            let g = (util::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
-            let b = (util::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;    
+            let r = (render_op::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
+            let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
+            let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;    
             img.put_pixel(x, y, Rgb([r, g, b]));
 
         }
@@ -115,3 +117,81 @@ pub fn render_naive(context: &RenderContext, world: &Region, img: &mut RgbImage)
 
 
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::renderer::scene::camera::Camera;
+    use crate::renderer::scene::world::Region;
+    use crate::renderer::core::color::Color;
+    use image::{RgbImage, ImageBuffer};
+
+    // Render a bizarre value out for testing purposes.
+    pub fn render_test_pixel(
+        _ctx_arc: &RenderContext, 
+        _world: &Region, 
+        x: usize, y: usize) -> Color {
+        Color::new(0.013 * (x as f32), 0.017 * (y as f32), 0.21)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_naive_empty_image() {
+        let mut img: RgbImage = ImageBuffer::new(0, 0);
+        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, 2, 2), 1, 1, 0, 0, 2, 2);
+
+        let r = Region::new(Color::new(0.13, 0.17, 0.23));
+
+        render_naive(&ctx, &r, &mut img, render_test_pixel);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_empty_image() {
+        let mut img: RgbImage = ImageBuffer::new(0, 0);
+        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, 2, 2), 1, 1, 0, 0, 2, 2);
+
+        let r = Region::new(Color::new(0.13, 0.17, 0.23));
+
+        match render_threaded(&ctx, &r, &mut img, render_test_pixel) {
+            Err(_) => panic!("we expect this"),
+            _ => {}
+        }
+    }
+
+    #[test]
+    fn test_render_full_naive() {
+        let mut img: RgbImage = ImageBuffer::new(2, 2);
+        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, 2, 2), 1, 1, 0, 0, 2, 2);
+
+        let r = Region::new(Color::new(1.0, 1.0, 1.0));
+
+        render_naive(&ctx, &r, &mut img, render_test_pixel);
+
+        for (x, y, pixel) in img.enumerate_pixels() {
+            assert_eq!(pixel[0], (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(pixel[1], (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(pixel[2], (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8);
+        }
+    }
+
+
+    #[test]
+    fn test_render_full_threaded() {
+        let mut img: RgbImage = ImageBuffer::new(2, 2);
+        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, 2, 2), 1, 1, 0, 0, 2, 2);
+
+        let r = Region::new(Color::new(1.0, 1.0, 1.0));
+
+        match render_threaded(&ctx, &r, &mut img, render_test_pixel) {
+            Err(_) => panic!("we don't expect this"),
+            _ => {}
+        }
+
+        for (x, y, pixel) in img.enumerate_pixels() {
+            assert_eq!(pixel[0], (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(pixel[1], (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(pixel[2], (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8);
+        }
+    }
+
+}

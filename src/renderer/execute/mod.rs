@@ -5,4 +5,4 @@ pub mod cpurender;
 pub mod error;
 pub mod gpurender;
 
-mod util;
+pub mod render_op;

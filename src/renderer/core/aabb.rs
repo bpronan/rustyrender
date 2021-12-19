@@ -129,7 +129,7 @@ mod tests {
         assert_eq!(b1.box_max.y, 10.0);
         assert_eq!(b1.box_max.z, 10.0);
 
-        let mut b1 = AABB::new(Point3::new(-1.0, -1.0, -3.0), Point3::new(1.0, 1.0, -4.0));
+        let b1 = AABB::new(Point3::new(-1.0, -1.0, -3.0), Point3::new(1.0, 1.0, -4.0));
         let r = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
         assert!(b1.hit(&r, f32::INFINITY));
         let r = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(10.0, 10.0, -1.0));

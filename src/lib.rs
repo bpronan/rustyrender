@@ -1,15 +1,14 @@
 extern crate image;
 
+use anyhow::Context;
 use image::{ImageBuffer, RgbImage};
 use log::info;
-
-use anyhow::Context;
+use parser::FileReaderFactory;
+use renderer::ComputeEnv;
 
 mod renderer;
 mod parser;
 
-use parser::FileReaderFactory;
-use renderer::ComputeEnv;
 
 /// The usage string on which docopt will base the argument
 /// parsing. 
@@ -21,7 +20,7 @@ pub const USAGE: &str = "
 Usage: rustyrender [options] <source> <dest>
        rustyrender --help
 
-A simple renderer written in rust. 
+A simple physically based monte-carlo ray tracing renderer written in rust. 
 
 Supported compute environments are:
     naive       A naive compute implementation.
@@ -64,6 +63,9 @@ pub struct Args {
 /// they will be handled.
 pub fn run(args: &Args) -> anyhow::Result<()> {
 
+    // create the output directory
+
+
     let imgx: u32 = args.flag_width as u32;
     let imgy: u32 = args.flag_height as u32;
     let samples_per_pixel = args.flag_samples as u32;
@@ -73,17 +75,29 @@ pub fn run(args: &Args) -> anyhow::Result<()> {
         None => ComputeEnv::Multicore
     };
 
-    let file_parser = FileReaderFactory::get_file_processor(&args.arg_source)?;
-    let world = file_parser.process_file()?;
+    let file_parser = FileReaderFactory::get_file_processor(&args.arg_source)
+        .context(format!("Unsupported input file type: {}", args.arg_source))?;
+    let world = file_parser.process_file()
+        .context(format!("Unable to parse input file: {}", args.arg_source))?;
     info!("World successfully built!");
 
     let mut img: RgbImage = ImageBuffer::new(imgx, imgy);
     info!("Output image buffer created.");
 
-    renderer::render(compute_env, samples_per_pixel, max_depth, &world, &mut img)?;
+    renderer::render(compute_env, samples_per_pixel, max_depth, &world, &mut img)
+        .context("Error encountered while rendering image")?;
+
+    // create any directories for the output
+    let path = std::path::Path::new(&args.arg_dest);
+    let prefix = path.parent().unwrap();
+    if !prefix.exists() {
+        std::fs::create_dir_all(prefix).unwrap();
+    }
 
     info!("Saving output to {}", args.arg_dest);
-    img.save(&args.arg_dest)?;
+    img.save(&args.arg_dest)
+        .context(format!("Error saving image file {}", args.arg_dest))?;
 
     Ok(())
 }
+

@@ -41,3 +41,5 @@ impl RenderContext {
         RenderContext { camera, max_depth, samples, start_x, start_y, end_x, end_y }
     }
 }
+
+

@@ -9,41 +9,6 @@ use crate::renderer::scene::world::Region;
 
 use super::context::RenderContext;
 
-/// A utility to calculate the color of a single ray. This is the meat
-/// of the raytracer algorithm. It uses an iterative loop rather than the
-/// classical recursive loop in order to avoid unnecessary memory use for 
-/// multithreading.
-pub fn ray_color_it(r: &Ray, world: &Region, max_depth: u32) -> Color {
-    let mut rec = HitRecord {
-        p: Point3::new(0.0, 0.0, 0.0),
-        normal: Vec3::new(0.0, 0.0, 0.0),
-        t: f32::INFINITY,
-        front_face: false,
-    };
-
-    let mut color = color::BLACK.clone();
-    let mut curr_ray = *r;
-
-    for n in 0..max_depth {
-        if !world.hit(&curr_ray, 0.001, f32::INFINITY, &mut rec)
-        {
-            let diffuse = 0.5_f32.powi((n) as i32);
-            color = diffuse * world.background_color(&curr_ray); 
-            break;
-        }
-        // randomize the ray reflection to account for the micro surface plane noise 
-        // in a diffuse surface
-        let target = rec.p + rec.normal + vector::random_in_unit_sphere();
-
-        curr_ray.orig = rec.p;
-        curr_ray.dir = target - rec.p;
-
-        rec.reset();
-    }
-
-    color
-}
-
 
 /// A utility function to loop through a random set of samples around the given ray 
 /// and average out the rendered colors for each ray to get the pixel value.
@@ -72,6 +37,41 @@ pub fn render_pixel(
     pixel *= pixel_scale;
 
     pixel
+}
+
+/// A utility to calculate the color of a single ray. This is the meat
+/// of the raytracer algorithm. It uses an iterative loop rather than the
+/// classical recursive loop in order to avoid unnecessary memory use for 
+/// multithreading.
+fn ray_color_it(r: &Ray, world: &Region, max_depth: u32) -> Color {
+    let mut rec = HitRecord {
+        p: Point3::new(0.0, 0.0, 0.0),
+        normal: Vec3::new(0.0, 0.0, 0.0),
+        t: f32::INFINITY,
+        front_face: false,
+    };
+
+    let mut color = color::BLACK.clone();
+    let mut curr_ray = *r;
+
+    for n in 0..max_depth {
+        if !world.hit(&curr_ray, 0.001, f32::INFINITY, &mut rec)
+        {
+            let diffuse = 0.5_f32.powi((n) as i32);
+            color = diffuse * world.background_color(&curr_ray); 
+            break;
+        }
+        // randomize the ray reflection to account for the micro surface plane noise 
+        // in a diffuse surface
+        let target = rec.p + rec.normal + vector::random_in_unit_sphere();
+
+        curr_ray.orig = rec.p;
+        curr_ray.dir = target - rec.p;
+
+        rec.reset();
+    }
+
+    color
 }
 
 /// Clamp a value between min and max. 

@@ -99,18 +99,22 @@ mod tests {
     use super::*;
 
     use crate::renderer::scene::hittable::Hittable;
-    use std::cell::RefCell;
     use crate::renderer::core::vector::Vec3;
 
     struct MockObject
     {
         bounds: AABB,
         should_hit: bool,
+        expect: bool,
     }
 
+    unsafe impl Sync for MockObject {}
+
     impl Hittable for MockObject {
-        fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool
+        fn hit(&self, _r: &Ray, _t_min: f32, _t_max: f32, _rec: &mut HitRecord) -> bool
         {
+            assert!(self.expect);
+
             self.should_hit
         }
 
@@ -121,11 +125,12 @@ mod tests {
     }
 
     #[test]
-    fn test_region() {
+    fn test_region_bounds() {
 
-        let mut mock_obj = MockObject { 
+        let mock_obj = MockObject { 
             bounds: AABB::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
-            should_hit: true,
+            should_hit: false,
+            expect: false,
         };
 
         let mut r = Region::new(Color::new(0.1, 0.1, 0.1));
@@ -139,12 +144,58 @@ mod tests {
         assert_eq!(r.bounding_box.box_max.y, 0.23);
         assert_eq!(r.bounding_box.box_max.z, 16.0);
 
+
+        let mock_obj = MockObject { 
+            bounds: AABB::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
+            should_hit: true,
+            expect: true,
+        };
+
+        r.push(Box::new(mock_obj));
+
+        assert_eq!(r.bounding_box.box_min.x, -1.0);
+        assert_eq!(r.bounding_box.box_min.y, -1.0);
+        assert_eq!(r.bounding_box.box_min.z, -4.0);
+        assert_eq!(r.bounding_box.box_max.x, 17.0);
+        assert_eq!(r.bounding_box.box_max.y, 1.0);
+        assert_eq!(r.bounding_box.box_max.z, 16.0);
+
+    }
+
+
+    #[test]
+    fn test_region_hit() {
+
+        let mock_obj = MockObject { 
+            bounds: AABB::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
+            should_hit: false,
+            expect: false,
+        };
+
+        let mut r = Region::new(Color::new(0.1, 0.1, 0.1));
+
+        let b_mock = Box::new(mock_obj);
+        r.push(b_mock);
+
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
         let mut rec = HitRecord::new();
         assert!(!r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
 
-        // TODO: figure out how to properly mock this object with RefCell
-        // or use a mock object.
+
+        let mock_obj = MockObject { 
+            bounds: AABB::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
+            should_hit: true,
+            expect: true,
+        };
+
+        let mut r = Region::new(Color::new(0.1, 0.1, 0.1));
+
+        let b_mock = Box::new(mock_obj);
+        r.push(b_mock);
+
+        let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
+        let mut rec = HitRecord::new();
+        assert!(r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
     }
     
 }
