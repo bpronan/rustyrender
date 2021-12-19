@@ -1,7 +1,7 @@
 mod json;
 pub mod error;
 
-use crate::renderer::scene::world::HittableList;
+use crate::renderer::scene::world::Region;
 use crate::parser::error::ParserError;
 
 use json::JSONSceneLoader;
@@ -76,6 +76,6 @@ impl FileReaderFactory {
 pub trait SceneLoader {
     /// Parses the file and returns an memory scene representation. 
     /// Returns an in memory representation of the scene file.
-    fn process_file(&self) -> BoxResult<HittableList>;
+    fn process_file(&self) -> BoxResult<Region>;
 }
 

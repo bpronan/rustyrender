@@ -3,37 +3,26 @@ use std::ops;
 
 use rand::Rng;
 
+use serde::{Deserialize, Serialize};
+
 /// A simple 3 dimensional vector container and math struct. 
 /// 
 /// REVIEW: This was intended to learn rust, moving forward, 
 /// it would make sense to integrate a crate like 'glam' and build
 /// the necessary features off of it. The next set of features would
 /// require matrices, so this is likely to go away.
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Deserialize, Serialize)]
 pub struct Vec3 {
-    pub e: (f32, f32, f32),
+    pub x: f32, 
+    pub y: f32,
+    pub z: f32,
 }
 
 impl Vec3 {
 
     /// Creates a vector from the three dimensional values.
     pub fn new(x: f32, y: f32, z: f32) -> Vec3 {
-        Vec3 { e: (x, y, z) }
-    }
-
-    /// The value of the x dimension of the vector.
-    pub fn x(&self) -> f32 {
-        self.e.0
-    }
-
-    /// The value of the y dimension of the vector.
-    pub fn y(&self) -> f32 {
-        self.e.1
-    }
-
-    /// The value of the z dimension of the vector.
-    pub fn z(&self) -> f32 {
-        self.e.2
+        Vec3 { x, y, z }
     }
 
     /// Calculates the length of the vector.
@@ -45,18 +34,16 @@ impl Vec3 {
     /// to compare lengths to the square of the value you are
     /// comparing it to.
     pub fn length_squared(&self) -> f32 {
-        self.e.0 * self.e.0 + self.e.1 * self.e.1 + self.e.2 * self.e.2
+        self.x * self.x + self.y * self.y + self.z * self.z
     }
 
     /// Creates a random vector where the dimensional values
     /// are within a specified range.
     pub fn random_range(min: f32, max: f32) -> Vec3 {
         Vec3 {
-            e: (
-                rand::thread_rng().gen_range(min..max),
-                rand::thread_rng().gen_range(min..max),
-                rand::thread_rng().gen_range(min..max),
-            ),
+            x: rand::thread_rng().gen_range(min..max),
+            y: rand::thread_rng().gen_range(min..max),
+            z: rand::thread_rng().gen_range(min..max),
         }
     }
 }
@@ -69,14 +56,14 @@ pub type Point3 = Vec3;
 
 /// Calculates the dot product of two vectors.
 pub fn dot(u: &Vec3, v: &Vec3) -> f32 {
-    u.e.0 * v.e.0 + u.e.1 * v.e.1 + u.e.2 * v.e.2
+    u.x * v.x + u.y * v.y + u.z * v.z
 }
 
 /// Returns a normalized vector pointing in the same
 /// direction as the input.
 pub fn unit_vector(v: &Vec3) -> Vec3 {
     let invlen = 1.0 / v.length();
-    Vec3::new(v.x() * invlen, v.y() * invlen, v.z() * invlen)
+    Vec3::new(v.x * invlen, v.y * invlen, v.z * invlen)
 }
 
 /// Returns a random vector on the surface of the unit sphere
@@ -94,7 +81,7 @@ impl ops::Neg for Vec3 {
     type Output = Self;
     fn neg(self) -> Self {
         Self {
-            e: (-self.e.0, -self.e.1, -self.e.2),
+            x: -self.x, y: -self.y, z: -self.z,
         }
     }
 }
@@ -105,11 +92,9 @@ impl ops::Add for Vec3 {
 
     fn add(self, other: Self) -> Self {
         Self {
-            e: (
-                self.e.0 + other.e.0,
-                self.e.1 + other.e.1,
-                self.e.2 + other.e.2,
-            ),
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
         }
     }
 }
@@ -120,11 +105,9 @@ impl ops::Sub for Vec3 {
 
     fn sub(self, other: Self) -> Self {
         Self {
-            e: (
-                self.e.0 - other.e.0,
-                self.e.1 - other.e.1,
-                self.e.2 - other.e.2,
-            ),
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
         }
     }
 }
@@ -133,11 +116,9 @@ impl ops::Sub for Vec3 {
 impl ops::AddAssign for Vec3 {
     fn add_assign(&mut self, _other: Self) {
         *self = Self {
-            e: (
-                self.e.0 + _other.e.0,
-                self.e.1 + _other.e.1,
-                self.e.2 + _other.e.2,
-            ),
+            x: self.x + _other.x,
+            y: self.y + _other.y,
+            z: self.z + _other.z,
         };
     }
 }
@@ -148,11 +129,9 @@ impl ops::Mul for Vec3 {
 
     fn mul(self, other: Self) -> Self {
         Self {
-            e: (
-                self.e.0 * other.e.0,
-                self.e.1 * other.e.1,
-                self.e.2 * other.e.2,
-            ),
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
         }
     }
 }
@@ -163,11 +142,35 @@ impl ops::Mul<f32> for Vec3 {
 
     fn mul(self, other: f32) -> Self {
         Self {
-            e: (
-                self.e.0 * other, 
-                self.e.1 * other, 
-                self.e.2 * other
-            ),
+            x: self.x * other, 
+            y: self.y * other, 
+            z: self.z * other
+        }
+    }
+}
+
+/// f + a scalar addition operator
+impl ops::Add<f32> for Vec3 {
+    type Output = Self;
+
+    fn add(self, other: f32) -> Self {
+        Self {
+            x: self.x + other, 
+            y: self.y + other, 
+            z: self.z + other
+        }
+    }
+}
+
+/// f + a scalar addition operator
+impl ops::Sub<f32> for Vec3 {
+    type Output = Self;
+
+    fn sub(self, other: f32) -> Self {
+        Self {
+            x: self.x - other, 
+            y: self.y - other, 
+            z: self.z - other
         }
     }
 }
@@ -178,9 +181,9 @@ impl ops::Mul<Vec3> for f32 {
 
     fn mul(self, other: Vec3) -> Vec3 {
         Vec3::new(
-            self * other.e.0, 
-            self * other.e.1, 
-            self * other.e.2
+            self * other.x, 
+            self * other.y, 
+            self * other.z,
         )
     }
 }
@@ -190,13 +193,11 @@ impl ops::Div<f32> for Vec3 {
     type Output = Self;
 
     fn div(self, other: f32) -> Self {
-        Self {
-            e: (
-                self.e.0 / other, 
-                self.e.1 / other, 
-                self.e.2 / other
-            ),
-        }
+        Vec3::new(
+            self.x / other, 
+            self.y / other, 
+            self.z / other
+        )
     }
 }
 
@@ -206,9 +207,9 @@ impl ops::Div<Vec3> for f32 {
 
     fn div(self, other: Vec3) -> Vec3 {
         Vec3::new(
-            self / other.e.0, 
-            self / other.e.1, 
-            self / other.e.2
+            self / other.x, 
+            self / other.y, 
+            self / other.z
         )
     }
 }
@@ -217,18 +218,18 @@ impl ops::Div<Vec3> for f32 {
 /// a *= f32 pointwise multiplication operator
 impl ops::MulAssign<f32> for Vec3 {
     fn mul_assign(&mut self, _other: f32) {
-        self.e.0 *= _other;
-        self.e.1 *= _other;
-        self.e.2 *= _other;
+        self.x *= _other;
+        self.y *= _other;
+        self.z *= _other;
     }
 }
 
 /// a /= f32 pointwise division operator
 impl ops::DivAssign<f32> for Vec3 {
     fn div_assign(&mut self, _other: f32) {
-        self.e.0 /= _other;
-        self.e.1 /= _other;
-        self.e.2 /= _other;
+        self.x /= _other;
+        self.y /= _other;
+        self.z /= _other;
     }
 }
 
@@ -249,9 +250,9 @@ mod tests {
         for _ in 0..10000 {
             let v = Vec3::random_range(-13.0, 17.0);
 
-            assert!(v.x() >= -13.0 && v.x() <= 17.0);
-            assert!(v.y() >= -13.0 && v.y() <= 17.0);
-            assert!(v.z() >= -13.0 && v.z() <= 17.0);
+            assert!(v.x >= -13.0 && v.x <= 17.0);
+            assert!(v.y >= -13.0 && v.y <= 17.0);
+            assert!(v.z >= -13.0 && v.z <= 17.0);
         }
     }
 
@@ -261,44 +262,55 @@ mod tests {
         let v2 = Vec3::new(1.0, 2.0, 3.0);
     
         v1 += v2;
-        assert_eq!(12.0, v1.x());
-        assert_eq!(15.0, v1.y());
-        assert_eq!(20.0, v1.z());
+        assert_eq!(12.0, v1.x);
+        assert_eq!(15.0, v1.y);
+        assert_eq!(20.0, v1.z);
     
         v1 *= 2.0;
-        assert_eq!(24.0, v1.x());
-        assert_eq!(30.0, v1.y());
-        assert_eq!(40.0, v1.z());
+        assert_eq!(24.0, v1.x);
+        assert_eq!(30.0, v1.y);
+        assert_eq!(40.0, v1.z);
     
         v1 /= 2.0;
-        assert_eq!(12.0, v1.x());
-        assert_eq!(15.0, v1.y());
-        assert_eq!(20.0, v1.z());
+        assert_eq!(12.0, v1.x);
+        assert_eq!(15.0, v1.y);
+        assert_eq!(20.0, v1.z);
     
         let v2 = -v1;
-        assert_eq!(-12.0, v2.x());
-        assert_eq!(-15.0, v2.y());
-        assert_eq!(-20.0, v2.z());
+        assert_eq!(-12.0, v2.x);
+        assert_eq!(-15.0, v2.y);
+        assert_eq!(-20.0, v2.z);
     
         let v3 = 5.0 * v2;
-        assert_eq!(-60.0, v3.x());
-        assert_eq!(-75.0, v3.y());
-        assert_eq!(-100.0, v3.z());
+        assert_eq!(-60.0, v3.x);
+        assert_eq!(-75.0, v3.y);
+        assert_eq!(-100.0, v3.z);
     
         let v3 = v2 * 5.0;
-        assert_eq!(-60.0, v3.x());
-        assert_eq!(-75.0, v3.y());
-        assert_eq!(-100.0, v3.z());
+        assert_eq!(-60.0, v3.x);
+        assert_eq!(-75.0, v3.y);
+        assert_eq!(-100.0, v3.z);
     
         let v4 = v3 / 5.0;
-        assert_eq!(-12.0, v4.x());
-        assert_eq!(-15.0, v4.y());
-        assert_eq!(-20.0, v4.z());
-    
+        assert_eq!(-12.0, v4.x);
+        assert_eq!(-15.0, v4.y);
+        assert_eq!(-20.0, v4.z);
+
+        let v4 = v3 + 5.0;
+        assert_eq!(-55.0, v4.x);
+        assert_eq!(-70.0, v4.y);
+        assert_eq!(-95.0, v4.z);
+
+        let v5 = v3 - 5.0;
+        assert_eq!(-65.0, v5.x);
+        assert_eq!(-80.0, v5.y);
+        assert_eq!(-105.0, v5.z);
+
+
         let p: Point3 = Point3::new(1.2, 2.2, 3.2);
-        assert_eq!(1.2, p.x());
-        assert_eq!(2.2, p.y());
-        assert_eq!(3.2, p.z());
+        assert_eq!(1.2, p.x);
+        assert_eq!(2.2, p.y);
+        assert_eq!(3.2, p.z);
     
         let v1 = Vec3::new(12.0, 15.0, 20.0);
         let v2 = Vec3::new(-12.0, -15.0, -20.0);

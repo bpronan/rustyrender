@@ -2,7 +2,7 @@
 
 pub mod context;
 pub mod cpurender;
-pub mod gpurender;
 pub mod error;
+pub mod gpurender;
 
 mod util;

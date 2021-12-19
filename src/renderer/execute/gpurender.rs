@@ -1,4 +1,4 @@
-use crate::renderer::scene::world::HittableList;
+use crate::renderer::scene::world::Region;
 
 use log::warn;
 use image::RgbImage;
@@ -8,7 +8,7 @@ use super::error::ComputeError;
 /// A paper thin facade for a CUDA based render. This would be the 
 /// entry point for adding that feature set.
 pub fn render_cuda(context: &RenderContext, 
-    world: &HittableList, 
+    world: &Region, 
     img: &mut RgbImage) -> Result<(), ComputeError> {
 
     // NOTE: when adding CUDA support, make sure to use this code
@@ -23,7 +23,7 @@ pub fn render_cuda(context: &RenderContext,
 /// A paper thin facade for a CUDA based render. This would be the 
 /// entry point for adding that feature set.
 pub fn render_opencl(context: &RenderContext, 
-    world: &HittableList, 
+    world: &Region, 
     img: &mut RgbImage) -> Result<(), ComputeError> {
 
     // NOTE: when adding CUDA support, make sure to use this code

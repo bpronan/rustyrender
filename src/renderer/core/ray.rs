@@ -5,9 +5,16 @@ use super::vector::{ Point3, Vec3 };
 pub struct Ray {
     pub orig: Point3,
     pub dir: Vec3,
+    pub invdir: Vec3,
 }
 
 impl Ray {
+
+    pub fn new(orig: Point3, dir: Vec3) -> Ray {
+        let invdir = 1.0 / dir;
+
+        Ray { orig: orig, dir: dir, invdir: invdir }
+    }
 
     /// Gets the point at t units of length along the ray. Useful
     /// for calculating ray-object intersections.
@@ -23,22 +30,22 @@ mod tests {
 
     #[test]
     fn test_rays() {
-        let r = Ray {
-            orig: Point3::new(1.0, 2.0, 3.0),
-            dir: Vec3::new(1.0, 2.0, 3.0),
-        };
+        let r = Ray::new(
+            Point3::new(1.0, 2.0, 3.0), 
+            Vec3::new(1.0, 2.0, 3.0)
+        );
     
         // sanity check positive
         let v = r.at(2.0);
-        assert_eq!(3.0, v.x());
-        assert_eq!(6.0, v.y());
-        assert_eq!(9.0, v.z());
+        assert_eq!(3.0, v.x);
+        assert_eq!(6.0, v.y);
+        assert_eq!(9.0, v.z);
 
         // sanity check negative
         let v = r.at(-2.0);
-        assert_eq!(-1.0, v.x());
-        assert_eq!(-2.0, v.y());
-        assert_eq!(-3.0, v.z());
+        assert_eq!(-1.0, v.x);
+        assert_eq!(-2.0, v.y);
+        assert_eq!(-3.0, v.z);
 
     }
     

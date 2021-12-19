@@ -4,7 +4,8 @@ use crate::renderer::core::vector;
 use crate::renderer::core::vector::{ Point3, Vec3 };
 use crate::renderer::core::color;
 use crate::renderer::core::color::Color;
-use crate::renderer::scene::world::{ HittableList, Hittable, HitRecord };
+use crate::renderer::scene::hittable::{ Hittable, HitRecord };
+use crate::renderer::scene::world::Region;
 
 use super::context::RenderContext;
 
@@ -12,7 +13,7 @@ use super::context::RenderContext;
 /// of the raytracer algorithm. It uses an iterative loop rather than the
 /// classical recursive loop in order to avoid unnecessary memory use for 
 /// multithreading.
-pub fn ray_color_it(r: &Ray, world: &HittableList, max_depth: u32) -> Color {
+pub fn ray_color_it(r: &Ray, world: &Region, max_depth: u32) -> Color {
     let mut rec = HitRecord {
         p: Point3::new(0.0, 0.0, 0.0),
         normal: Vec3::new(0.0, 0.0, 0.0),
@@ -26,10 +27,8 @@ pub fn ray_color_it(r: &Ray, world: &HittableList, max_depth: u32) -> Color {
     for n in 0..max_depth {
         if !world.hit(&curr_ray, 0.001, f32::INFINITY, &mut rec)
         {
-            let unit_direction = vector::unit_vector(&curr_ray.dir);
-            let t = 0.5 * (unit_direction.y() + 1.0);
             let diffuse = 0.5_f32.powi((n) as i32);
-            color = diffuse * color::lerp(color::WHITE, color::BACKGROUND, t);
+            color = diffuse * world.background_color(&curr_ray); 
             break;
         }
         // randomize the ray reflection to account for the micro surface plane noise 
@@ -50,7 +49,7 @@ pub fn ray_color_it(r: &Ray, world: &HittableList, max_depth: u32) -> Color {
 /// and average out the rendered colors for each ray to get the pixel value.
 pub fn render_pixel(
     ctx_arc: &RenderContext, 
-    world: &HittableList, 
+    world: &Region, 
     x: usize, y: usize) -> Color {
     
     let mut pixel = Color::new(0.0, 0.0, 0.0);

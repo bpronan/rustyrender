@@ -1,4 +1,4 @@
-extern crate image;
+
 
 use rustyrender::{Args, USAGE};
 

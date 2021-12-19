@@ -1,4 +1,4 @@
-
+extern crate image;
 
 use image::{ImageBuffer, RgbImage};
 use log::info;

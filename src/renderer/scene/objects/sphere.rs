@@ -1,9 +1,13 @@
+use crate::renderer::core::aabb::AABB;
 use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector;
 use crate::renderer::core::vector::Point3;
-use crate::renderer::scene::world::{ HitRecord, Hittable };
 
-#[derive(Copy, Clone, Debug)]
+use crate::renderer::scene::hittable::{ HitRecord, Hittable };
+
+use serde::{Serialize, Deserialize};
+
+#[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct Sphere {
     pub center: Point3,
     pub radius: f32,
@@ -36,5 +40,9 @@ impl Hittable for Sphere {
         let outward_normal = (rec.p - self.center) / self.radius;
         rec.set_face_normal(r, &outward_normal);
         true
+    }
+
+    fn bounds(&self) -> AABB {
+        AABB::new(self.center - self.radius, self.center + self.radius)
     }
 }

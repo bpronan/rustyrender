@@ -7,6 +7,9 @@ pub mod vector;
 /// A library containing the representation of a RGB floating point color
 pub mod color;
 
+/// A library containing the representation of a axis aligned bounding box
+pub mod aabb;
+
 /// This macro takes an expression as an argument and will
 /// log to error and panic on debug only. This is useful for 
 /// precondition checks for internal APIs.

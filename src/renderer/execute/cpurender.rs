@@ -1,5 +1,5 @@
 use crate::renderer::core::debug_check;
-use crate::renderer::scene::world::HittableList;
+use crate::renderer::scene::world::Region;
 
 use log::error;
 use image::{Rgb, RgbImage};
@@ -19,7 +19,7 @@ use super::util;
 /// * `world` - The scene to render.
 /// * `img` - The image buffer to write to.
 pub fn render_threaded(context: &RenderContext, 
-    world: &HittableList, 
+    world: &Region, 
     img: &mut RgbImage) -> Result<(), ComputeError> {
 
     // already covered by checks on the public api, but here to keep the internal behavior 
@@ -53,9 +53,9 @@ pub fn render_threaded(context: &RenderContext,
                         let pixel = util::render_pixel(&ctx, &world, x as usize, y as usize);
 
                         // REVIEW: would love to turn this into a macro, if only there were time.
-                        let r = (util::clamp(f32::sqrt(pixel.x()), 0.0, 0.999) * 256.0) as u8;
-                        let g = (util::clamp(f32::sqrt(pixel.y()), 0.0, 0.999) * 256.0) as u8;
-                        let b = (util::clamp(f32::sqrt(pixel.z()), 0.0, 0.999) * 256.0) as u8;
+                        let r = (util::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
+                        let g = (util::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
+                        let b = (util::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
                         tx.send((x, y, Rgb([r, g, b]))).unwrap();
 
                     }
@@ -87,7 +87,7 @@ pub fn render_threaded(context: &RenderContext,
 /// * `context` - The render context that contains the information necessary to render the image.
 /// * `world` - The scene to render.
 /// * `img` - The image buffer to write to.
-pub fn render_naive(context: &RenderContext, world: &HittableList, img: &mut RgbImage) {
+pub fn render_naive(context: &RenderContext, world: &Region, img: &mut RgbImage) {
 
     // already covered by checks on the public api, but here to keep the internal 
     // consistency
@@ -104,9 +104,9 @@ pub fn render_naive(context: &RenderContext, world: &HittableList, img: &mut Rgb
         for x in s_x..e_x {
             let pixel = util::render_pixel(context, world, x as usize, y as usize);
 
-            let r = (util::clamp(f32::sqrt(pixel.x()), 0.0, 0.999) * 256.0) as u8;
-            let g = (util::clamp(f32::sqrt(pixel.y()), 0.0, 0.999) * 256.0) as u8;
-            let b = (util::clamp(f32::sqrt(pixel.z()), 0.0, 0.999) * 256.0) as u8;    
+            let r = (util::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
+            let g = (util::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
+            let b = (util::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;    
             img.put_pixel(x, y, Rgb([r, g, b]));
 
         }

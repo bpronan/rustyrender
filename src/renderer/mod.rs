@@ -15,7 +15,7 @@ use crate::renderer::execute::gpurender;
 use crate::renderer::scene::camera::Camera;
 
 use image::RgbImage;
-use crate::renderer::scene::world::HittableList;
+use crate::renderer::scene::world::Region;
 
 /// The compute backend to use for the render. Naive
 /// is a single threaded loop. Multicore will create a 
@@ -102,7 +102,7 @@ macro_rules! condition_check {
 /// * `ComputeError` - There was an error or panic while executing the render.
 /// This is likely due to a system level failure or defect.
 pub fn render(env: ComputeEnv, samples_per_pixel: u32, max_depth: u32, 
-    world: &HittableList, img_buf: &mut RgbImage) -> Result<(), RendererError> {
+    world: &Region, img_buf: &mut RgbImage) -> Result<(), RendererError> {
 
     // precondition checks
     condition_check!(samples_per_pixel == 0, 
