@@ -45,12 +45,16 @@ pub fn render_threaded(context: &RenderContext,
         for n in 0..threads {
             let lenx = w / threads;
             let leny = h;
+            let start_x = n * lenx;
+            // leave the last thread to handle the left over if the math doesn't work out
+            let end_x = if n == threads- 1 { w } else { (n+1) * lenx };
+
             let world = wrld_arc.clone();
             let ctx = ctx_arc.clone();
             let tx = tx.clone();
 
             scope.spawn(move |_| {
-                for x in n*lenx..(n+1)*lenx {
+                for x in start_x..end_x {
                     for y in 0..leny {
 
                         let pixel = render_op(&ctx, &world, x as usize, y as usize);
@@ -64,8 +68,8 @@ pub fn render_threaded(context: &RenderContext,
                     }
                 }
             });
-
         }
+
     }).map_err(|source| {
         error!("Thread error: {:?}", source);
         ComputeError::ThreadPanickedError 
@@ -179,6 +183,32 @@ mod tests {
     fn test_render_full_threaded() {
         let mut img: RgbImage = ImageBuffer::new(2, 2);
         let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, 2, 2), 1, 1, 0, 0, 2, 2);
+
+        let r = Region::new(Color::new(1.0, 1.0, 1.0));
+
+        match render_threaded(&ctx, &r, &mut img, render_test_pixel) {
+            Err(_) => panic!("we don't expect this"),
+            _ => {}
+        }
+
+        for (x, y, pixel) in img.enumerate_pixels() {
+            assert_eq!(pixel[0], (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(pixel[1], (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(pixel[2], (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8);
+        }
+    }
+
+    // Bugfix: <bug tracking number>: this test will hang if the bug is reintroduced
+    // Review: This shows my basic maintenance workflow, 
+    // this test was added first to reproduce the problem, then the fix was added.
+    #[test]
+    fn test_render_width_not_multiple_of_threads() {
+
+        let cpus = num_cpus::get() as u32;
+        let w = cpus * 10 + (cpus - 1);
+        let h = w;
+        let mut img: RgbImage = ImageBuffer::new(w, h);
+        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, w, h), 1, 1, 0, 0, w, h);
 
         let r = Region::new(Color::new(1.0, 1.0, 1.0));
 
