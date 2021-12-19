@@ -2,11 +2,12 @@ use super::SceneLoader;
 
 use crate::renderer::core::vector::Point3;
 use crate::renderer::scene::world::HittableList;
-use crate::renderer::scene::sphere::Sphere;
+use crate::renderer::scene::objects::sphere::Sphere;
 
-use log::info;
+use log::{info, error};
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::path::Path;
 
 use crate::parser::BoxResult;
 use crate::parser::error::ParserError;
@@ -26,6 +27,10 @@ impl SceneLoader for JSONSceneLoader {
 
     fn process_file(&self) -> BoxResult<HittableList> {
         info!("Parsing world filename {}", self.filename);
+        if !Path::new(&self.filename).exists() {
+            error!("World input file does not exist at {}", self.filename);
+            return Err(ParserError::FileNotFoundError);
+        }
     
         #[derive(Debug, Deserialize, Serialize)] struct LocationStruct {
             x: f32,
@@ -43,13 +48,10 @@ impl SceneLoader for JSONSceneLoader {
             objects: Vec<SphereStruct>,
         }
     
-        // TODO: Get rid of this clone call
-        // TODO: move the read file out of this call. breaks single 
-        // responsibility principle.
-        let contents = fs::read_to_string(self.filename.clone())?;
+        let contents = fs::read_to_string(&self.filename)?;
         
         let world_object: WorldStruct = serde_json::from_str(&contents)
-            .map_err(|source| ParserError::FormatCorrupted{ source })?;
+            .map_err(|source| ParserError::FormatCorruptedError{ source })?;
     
         // World
         let mut world = HittableList {

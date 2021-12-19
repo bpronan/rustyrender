@@ -1,7 +1,7 @@
-use crate::renderer::core::vector;
 use crate::renderer::core::ray::Ray;
-use crate::renderer::scene::world::{ HitRecord, Hittable };
+use crate::renderer::core::vector;
 use crate::renderer::core::vector::Point3;
+use crate::renderer::scene::world::{ HitRecord, Hittable };
 
 #[derive(Copy, Clone, Debug)]
 pub struct Sphere {

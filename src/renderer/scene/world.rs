@@ -2,9 +2,6 @@ use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector;
 use crate::renderer::core::vector::{ Point3, Vec3 };
 
-use crate::renderer::scene::sphere::Sphere;
-
-// TODO: See about this
 #[derive(Copy, Clone)]
 pub struct HitRecord {
     pub p: Point3,
@@ -38,35 +35,8 @@ pub trait Hittable {
 
 pub struct HittableList {
     pub objects: Vec<Box<dyn Hittable + Sync>>,
-    //pub objects: Vec<Sphere>,
 }
 
-pub struct SphereWorld {
-    pub objects: Vec<Sphere>,
-}
-
-impl Hittable for SphereWorld {
-    fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {
-        let mut hit_temp = HitRecord {
-            p: Point3::new(0.0, 0.0, 0.0),
-            normal: Vec3::new(0.0, 0.0, 0.0),
-            t: f32::INFINITY,
-            front_face: false,
-        };
-        let mut hit_anything = false;
-        let mut closest_so_far = t_max;
-
-        for hittable in &self.objects {
-            if hittable.hit(r, t_min, closest_so_far, &mut hit_temp) {
-                hit_anything = true;
-                closest_so_far = hit_temp.t;
-                *rec = hit_temp;
-            }
-        }
-
-        hit_anything
-    }
-}
 
 impl Hittable for HittableList {
     fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {

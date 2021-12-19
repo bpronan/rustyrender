@@ -1,23 +1,18 @@
 use rand::Rng;
 use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector;
-use crate::renderer::core::vector::{ Color, Point3, Vec3 };
+use crate::renderer::core::vector::{ Point3, Vec3 };
+use crate::renderer::core::color;
+use crate::renderer::core::color::Color;
 use crate::renderer::scene::world::{ HittableList, Hittable, HitRecord };
 
 use super::context::RenderContext;
 
-#[inline]
-pub fn clamp(x: f32, min: f32, max: f32) -> f32 {
-    if x < min {
-        return min;
-    }
-    if x > max {
-        return max;
-    }
-    x
-}
-
-pub fn ray_color_it(r: &Ray, world: &HittableList, depth: u32) -> Color {
+/// A utility to calculate the color of a single ray. This is the meat
+/// of the raytracer algorithm. It uses an iterative loop rather than the
+/// classical recursive loop in order to avoid unnecessary memory use for 
+/// multithreading.
+pub fn ray_color_it(r: &Ray, world: &HittableList, max_depth: u32) -> Color {
     let mut rec = HitRecord {
         p: Point3::new(0.0, 0.0, 0.0),
         normal: Vec3::new(0.0, 0.0, 0.0),
@@ -25,21 +20,22 @@ pub fn ray_color_it(r: &Ray, world: &HittableList, depth: u32) -> Color {
         front_face: false,
     };
 
-    let mut color = Color::new(0.0, 0.0, 0.0);
-
+    let mut color = color::BLACK.clone();
     let mut curr_ray = *r;
 
-    for n in 0..depth {
+    for n in 0..max_depth {
         if !world.hit(&curr_ray, 0.001, f32::INFINITY, &mut rec)
         {
             let unit_direction = vector::unit_vector(&curr_ray.dir);
             let t = 0.5 * (unit_direction.y() + 1.0);
-            color = (Color::new(1.0, 1.0, 1.0) * (1.0 - t) 
-                + Color::new(0.5, 0.7, 1.0) 
-                * t) * 0.5_f32.powi((n) as i32);
+            let diffuse = 0.5_f32.powi((n) as i32);
+            color = diffuse * color::lerp(color::WHITE, color::BACKGROUND, t);
             break;
         }
+        // randomize the ray reflection to account for the micro surface plane noise 
+        // in a diffuse surface
         let target = rec.p + rec.normal + vector::random_in_unit_sphere();
+
         curr_ray.orig = rec.p;
         curr_ray.dir = target - rec.p;
 
@@ -49,7 +45,14 @@ pub fn ray_color_it(r: &Ray, world: &HittableList, depth: u32) -> Color {
     color
 }
 
-pub fn render_pixel(ctx_arc: &RenderContext, world: &HittableList, x: usize, y: usize) -> Color {
+
+/// A utility function to loop through a random set of samples around the given ray 
+/// and average out the rendered colors for each ray to get the pixel value.
+pub fn render_pixel(
+    ctx_arc: &RenderContext, 
+    world: &HittableList, 
+    x: usize, y: usize) -> Color {
+    
     let mut pixel = Color::new(0.0, 0.0, 0.0);
     let w = ctx_arc.camera.film_width as usize;
     let h = ctx_arc.camera.film_height as usize;
@@ -70,4 +73,19 @@ pub fn render_pixel(ctx_arc: &RenderContext, world: &HittableList, x: usize, y: 
     pixel *= pixel_scale;
 
     pixel
+}
+
+/// Clamp a value between min and max. 
+/// 
+/// REVIEW: This should probably be pushed into a math library, but
+/// would (probably) lose its inline abilities.
+#[inline]
+pub fn clamp(x: f32, min: f32, max: f32) -> f32 {
+    if x < min {
+        return min;
+    }
+    if x > max {
+        return max;
+    }
+    x
 }

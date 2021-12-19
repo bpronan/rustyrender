@@ -8,7 +8,7 @@ use anyhow::Context;
 mod renderer;
 mod parser;
 
-use crate::parser::FileReaderFactory;
+use parser::FileReaderFactory;
 use renderer::ComputeEnv;
 
 /// The usage string on which docopt will base the argument

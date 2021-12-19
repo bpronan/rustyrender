@@ -1,5 +1,5 @@
 use crate::renderer::core::ray::Ray;
-use crate::renderer::core::vector::Color;
+use crate::renderer::core::color::Color;
 use crate::renderer::scene::world::HitRecord;
 
 

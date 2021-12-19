@@ -2,6 +2,9 @@ use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector::{ Point3, Vec3 };
 
 
+/// A simple camera and film simulation. It's responsible 
+/// for casting the rays through the film plane and into 
+/// the scene. 
 #[derive(Copy, Clone, Debug)]
 pub struct Camera {
     origin: Point3,
@@ -32,7 +35,7 @@ impl Camera {
     pub fn get_ray(&self, u: f32, v: f32) -> Ray {
         Ray {
             orig: self.origin,
-            dir: self.ll_corner + self.horizontal * u + self.vertical * v - self.origin,
+            dir: self.ll_corner + u * self.horizontal + v * self.vertical - self.origin,
         }
     }
 }

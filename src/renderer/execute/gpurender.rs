@@ -1,8 +1,6 @@
-
-use log::warn;
-
 use crate::renderer::scene::world::HittableList;
 
+use log::warn;
 use image::RgbImage;
 use super::context::RenderContext;
 use super::error::ComputeError;
@@ -17,8 +15,7 @@ pub fn render_cuda(context: &RenderContext,
     // to fall back in case the user isn't on a nVidia card.
     warn!("CUDA not supported yet, reverting to multithreaded CPU.");
 
-    super::cpurender::render_threaded(context, world, img)?;    
-
+    super::cpurender::render_threaded(context, world, img)?;
 
     Ok(())
 }
@@ -33,7 +30,7 @@ pub fn render_opencl(context: &RenderContext,
     // to fall back in case the user isn't on an OpenCL environment.
     warn!("OpenCL not supported yet, reverting to multithreaded CPU.");
 
-    super::cpurender::render_threaded(context, world, img)?;    
+    super::cpurender::render_threaded(context, world, img)?;
     
     Ok(())
 }
