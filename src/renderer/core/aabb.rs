@@ -1,7 +1,7 @@
-use crate::renderer::core::vector::Point3;
 use crate::renderer::core::ray::Ray;
+use crate::renderer::core::vector::Point3;
 
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct AABB {
@@ -35,14 +35,12 @@ macro_rules! min {
     }}
 }
 
-
 /// An implementation of an axis-aligned bounding box. This
 /// can be used for quickly checking whether an object or region
 /// has any intersections before trying to find out hit information.
 impl AABB {
-
     /// Creates an AABB from the two points specified.
-    /// 
+    ///
     /// Params:
     /// * `box_min` - The lower left front most point of the box.
     /// * `box_max` - the upper right back most point of the box.
@@ -65,24 +63,24 @@ impl AABB {
 
     /// Returns whether the ray will intersect the bounding box.
     pub fn hit(&self, r: &Ray, t: f32) -> bool {
-        let tx1 = (self.box_min.x - r.orig.y)*r.invdir.y;
-        let tx2 = (self.box_max.x - r.orig.y)*r.invdir.y;
-      
+        let tx1 = (self.box_min.x - r.orig.y) * r.invdir.y;
+        let tx2 = (self.box_max.x - r.orig.y) * r.invdir.y;
+
         let mut tmin = min!(tx1, tx2);
         let mut tmax = max!(tx1, tx2);
-      
-        let ty1 = (self.box_min.y - r.orig.y)*r.invdir.y;
-        let ty2 = (self.box_max.y - r.orig.y)*r.invdir.y;
-      
+
+        let ty1 = (self.box_min.y - r.orig.y) * r.invdir.y;
+        let ty2 = (self.box_max.y - r.orig.y) * r.invdir.y;
+
         tmin = max!(tmin, min!(ty1, ty2));
         tmax = min!(tmax, max!(ty1, ty2));
-      
-        let tz1 = (self.box_min.z - r.orig.z)*r.invdir.z;
-        let tz2 = (self.box_max.z - r.orig.z)*r.invdir.z;
-      
+
+        let tz1 = (self.box_min.z - r.orig.z) * r.invdir.z;
+        let tz2 = (self.box_max.z - r.orig.z) * r.invdir.z;
+
         tmin = max!(tmin, min!(tz1, tz2));
         tmax = min!(tmax, max!(tz1, tz2));
-      
+
         return tmax >= max!(0.0, tmin) && tmin < t;
     }
 }
@@ -90,8 +88,8 @@ impl AABB {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::renderer::core::vector::Vec3;
     use crate::renderer::core::ray::Ray;
+    use crate::renderer::core::vector::Vec3;
 
     #[test]
     fn test_boxes() {
@@ -118,7 +116,10 @@ mod tests {
         assert_eq!(b1.box_max.y, 10.0);
         assert_eq!(b1.box_max.z, 10.0);
 
-        let b4 = AABB::new(Point3::new(-10.0, -4.0, -10.0), Point3::new(10.0, 10.0, 10.0));
+        let b4 = AABB::new(
+            Point3::new(-10.0, -4.0, -10.0),
+            Point3::new(10.0, 10.0, 10.0),
+        );
 
         b1.expand(b4);
 
@@ -134,7 +135,5 @@ mod tests {
         assert!(b1.hit(&r, f32::INFINITY));
         let r = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(10.0, 10.0, -1.0));
         assert!(!b1.hit(&r, f32::INFINITY));
-
     }
-    
 }

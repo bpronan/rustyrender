@@ -1,4 +1,4 @@
-use super::vector::{ Point3, Vec3 };
+use super::vector::{Point3, Vec3};
 
 /// A simple 3D ray struct.
 #[derive(Copy, Clone)]
@@ -9,11 +9,14 @@ pub struct Ray {
 }
 
 impl Ray {
-
     pub fn new(orig: Point3, dir: Vec3) -> Ray {
         let invdir = 1.0 / dir;
 
-        Ray { orig: orig, dir: dir, invdir: invdir }
+        Ray {
+            orig: orig,
+            dir: dir,
+            invdir: invdir,
+        }
     }
 
     /// Gets the point at t units of length along the ray. Useful
@@ -23,18 +26,14 @@ impl Ray {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn test_rays() {
-        let r = Ray::new(
-            Point3::new(1.0, 2.0, 3.0), 
-            Vec3::new(1.0, 2.0, 3.0)
-        );
-    
+        let r = Ray::new(Point3::new(1.0, 2.0, 3.0), Vec3::new(1.0, 2.0, 3.0));
+
         // sanity check positive
         let v = r.at(2.0);
         assert_eq!(3.0, v.x);
@@ -46,7 +45,5 @@ mod tests {
         assert_eq!(-1.0, v.x);
         assert_eq!(-2.0, v.y);
         assert_eq!(-3.0, v.z);
-
     }
-    
 }

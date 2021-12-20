@@ -6,15 +6,14 @@ use log::info;
 use parser::FileReaderFactory;
 use renderer::ComputeEnv;
 
-mod renderer;
 mod parser;
-
+mod renderer;
 
 /// The usage string on which docopt will base the argument
-/// parsing. 
-/// 
+/// parsing.
+///
 /// Note: This should really be in main.rs instead of here.
-/// It is in this file and not in main.rs for no other reason 
+/// It is in this file and not in main.rs for no other reason
 /// than that it wouldn't work with my weak Rust programming skills.
 pub const USAGE: &str = "
 Usage: rustyrender [options] <source> <dest>
@@ -37,10 +36,10 @@ Options:
     --depth <arg>       The maximum depth of the ray recursion. [default: 50]
 ";
 
-/// The struct definition for deserializing the data. 
-/// 
+/// The struct definition for deserializing the data.
+///
 /// Note: Like the above, this should really be in main.rs instead of here.
-/// It is in this file and not in main.rs for no other reason 
+/// It is in this file and not in main.rs for no other reason
 /// than that it wouldn't work with my weak Rust programming skills.
 #[derive(serde::Deserialize)]
 pub struct Args {
@@ -53,18 +52,16 @@ pub struct Args {
     flag_depth: isize,
 }
 
-/// The run function is called from 'main()'. 
-/// 
-/// It opens up the scene file, creates the necessary memory, 
+/// The run function is called from 'main()'.
+///
+/// It opens up the scene file, creates the necessary memory,
 /// renders the image, and saves to the output file.
-/// 
-/// It also annotates the errors from the scene parsing and 
-/// rendering and propagates them upwards to 'main()' where 
+///
+/// It also annotates the errors from the scene parsing and
+/// rendering and propagates them upwards to 'main()' where
 /// they will be handled.
 pub fn run(args: &Args) -> anyhow::Result<()> {
-
     // create the output directory
-
 
     let imgx: u32 = args.flag_width as u32;
     let imgy: u32 = args.flag_height as u32;
@@ -72,12 +69,13 @@ pub fn run(args: &Args) -> anyhow::Result<()> {
     let max_depth = args.flag_depth as u32;
     let compute_env = match args.flag_compute {
         Some(s) => s,
-        None => ComputeEnv::Multicore
+        None => ComputeEnv::Multicore,
     };
 
     let file_parser = FileReaderFactory::get_file_processor(&args.arg_source)
         .context(format!("Unsupported input file type: {}", args.arg_source))?;
-    let world = file_parser.process_file()
+    let world = file_parser
+        .process_file()
         .context(format!("Unable to parse input file: {}", args.arg_source))?;
     info!("World successfully built!");
 
@@ -100,4 +98,3 @@ pub fn run(args: &Args) -> anyhow::Result<()> {
 
     Ok(())
 }
-

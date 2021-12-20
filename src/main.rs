@@ -1,15 +1,13 @@
-
-
 use rustyrender::{Args, USAGE};
 
-use log::error;
-use log::{Record, Level, Metadata};
-use log::{LevelFilter};
 use docopt::Docopt;
+use log::error;
+use log::LevelFilter;
+use log::{Level, Metadata, Record};
 
-/// A simple logger that outputs stdout. 
-/// 
-/// In a more advanced runtime environment, we would want to write 
+/// A simple logger that outputs stdout.
+///
+/// In a more advanced runtime environment, we would want to write
 /// these messages to disk or send to a monitoring service.
 struct SimpleLogger;
 
@@ -29,11 +27,11 @@ impl log::Log for SimpleLogger {
     fn flush(&self) {}
 }
 
-
 fn main() {
     // All info and error calls will go to the simple logger defined above.
     log::set_logger(&LOGGER)
-        .map(|()| log::set_max_level(LevelFilter::Info)).unwrap();
+        .map(|()| log::set_max_level(LevelFilter::Info))
+        .unwrap();
 
     let args: &Args = &Docopt::new(USAGE)
         .and_then(|d| d.deserialize())

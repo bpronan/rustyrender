@@ -5,16 +5,15 @@ use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector;
 use crate::renderer::core::vector::Point3;
 
-use crate::renderer::scene::hittable::{Hittable, HitRecord};
-
+use crate::renderer::scene::hittable::{HitRecord, Hittable};
 
 /// A data structure representing a region of the scene. This can
 /// be the whole scene or a self-contained portion of the scene.
-/// 
-/// This will be used to implement k-d trees to improve the 
+///
+/// This will be used to implement k-d trees to improve the
 /// performance further.
-/// 
-// REVIEW: Here's where we would write the custom serde juice to 
+///
+// REVIEW: Here's where we would write the custom serde juice to
 // marshall this region/world struct
 pub struct Region {
     pub objects: Vec<Box<dyn Hittable + Sync>>,
@@ -22,16 +21,14 @@ pub struct Region {
     bg_color: Color,
 }
 
-
 impl Region {
-
     /// Create a new empty region with the specified background color.
     /// The background color will be used when the ray doesn't intersect
     /// anything.
     pub fn new(bg_color: Color) -> Region {
-        Region { 
+        Region {
             objects: Vec::new(),
-            bounding_box: AABB::new(                
+            bounding_box: AABB::new(
                 Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
                 Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
             ),
@@ -50,7 +47,7 @@ impl Region {
     /// Gets the color for a ray that hasn't hit any objects.
     /// This would likely be a lookup into an HDRI image
     /// or cube map as the engine gets improved.
-    /// 
+    ///
     /// This doesn't really belong here. It should be a property
     /// of the global world only, not every logical region.
     pub fn background_color(&self, r: &Ray) -> Color {
@@ -60,11 +57,9 @@ impl Region {
     }
 }
 
-/// The region implements the hittable trait as well. 
+/// The region implements the hittable trait as well.
 impl Hittable for Region {
-
     fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {
-
         // if we don't hit the world bounding box, return right away
         if !self.bounding_box.hit(r, t_max) {
             return false;
@@ -86,7 +81,6 @@ impl Hittable for Region {
         hit_anything
     }
 
-
     fn bounds(&self) -> AABB {
         // the bounding box has been updated on insertion of the objects, so
         // just return it.
@@ -98,11 +92,10 @@ impl Hittable for Region {
 mod tests {
     use super::*;
 
-    use crate::renderer::scene::hittable::Hittable;
     use crate::renderer::core::vector::Vec3;
+    use crate::renderer::scene::hittable::Hittable;
 
-    struct MockObject
-    {
+    struct MockObject {
         bounds: AABB,
         should_hit: bool,
         expect: bool,
@@ -111,8 +104,7 @@ mod tests {
     unsafe impl Sync for MockObject {}
 
     impl Hittable for MockObject {
-        fn hit(&self, _r: &Ray, _t_min: f32, _t_max: f32, _rec: &mut HitRecord) -> bool
-        {
+        fn hit(&self, _r: &Ray, _t_min: f32, _t_max: f32, _rec: &mut HitRecord) -> bool {
             assert!(self.expect);
 
             self.should_hit
@@ -121,13 +113,11 @@ mod tests {
         fn bounds(&self) -> AABB {
             self.bounds
         }
-
     }
 
     #[test]
     fn test_region_bounds() {
-
-        let mock_obj = MockObject { 
+        let mock_obj = MockObject {
             bounds: AABB::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
             should_hit: false,
             expect: false,
@@ -144,8 +134,7 @@ mod tests {
         assert_eq!(r.bounding_box.box_max.y, 0.23);
         assert_eq!(r.bounding_box.box_max.z, 16.0);
 
-
-        let mock_obj = MockObject { 
+        let mock_obj = MockObject {
             bounds: AABB::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
             should_hit: true,
             expect: true,
@@ -159,14 +148,11 @@ mod tests {
         assert_eq!(r.bounding_box.box_max.x, 17.0);
         assert_eq!(r.bounding_box.box_max.y, 1.0);
         assert_eq!(r.bounding_box.box_max.z, 16.0);
-
     }
-
 
     #[test]
     fn test_region_hit() {
-
-        let mock_obj = MockObject { 
+        let mock_obj = MockObject {
             bounds: AABB::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
             should_hit: false,
             expect: false,
@@ -181,8 +167,7 @@ mod tests {
         let mut rec = HitRecord::new();
         assert!(!r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
 
-
-        let mock_obj = MockObject { 
+        let mock_obj = MockObject {
             bounds: AABB::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
             should_hit: true,
             expect: true,
@@ -197,5 +182,4 @@ mod tests {
         let mut rec = HitRecord::new();
         assert!(r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
     }
-    
 }

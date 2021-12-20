@@ -1,12 +1,12 @@
-use crate::renderer::core::debug_check;
 use crate::renderer::core::color::Color;
+use crate::renderer::core::debug_check;
 use crate::renderer::scene::world::Region;
 
-use log::error;
 use image::{Rgb, RgbImage};
+use log::error;
 
-use std::sync::Arc;
 use std::sync::mpsc;
+use std::sync::Arc;
 
 use super::context::RenderContext;
 use super::error::ComputeError;
@@ -16,16 +16,18 @@ type RenderPixelOp = fn(&RenderContext, &Region, usize, usize) -> Color;
 
 /// Renders the multicore version of the algorithm using a set of n threads
 /// and a mpsc channel to collect the pixels into the output.
-/// 
+///
 /// Parameters:
 /// * `context` - The render context that contains the information necessary to render the image.
 /// * `world` - The scene to render.
 /// * `img` - The image buffer to write to.
-pub fn render_threaded(context: &RenderContext, 
-    world: &Region, 
-    img: &mut RgbImage, render_op: RenderPixelOp) -> Result<(), ComputeError> {
-
-    // already covered by checks on the public api, but here to keep the internal behavior 
+pub fn render_threaded(
+    context: &RenderContext,
+    world: &Region,
+    img: &mut RgbImage,
+    render_op: RenderPixelOp,
+) -> Result<(), ComputeError> {
+    // already covered by checks on the public api, but here to keep the internal behavior
     // consistency
     debug_check!(img.width() > 0);
     debug_check!(img.height() > 0);
@@ -47,7 +49,7 @@ pub fn render_threaded(context: &RenderContext,
             let leny = h;
             let start_x = n * lenx;
             // leave the last thread to handle the left over if the math doesn't work out
-            let end_x = if n == threads- 1 { w } else { (n+1) * lenx };
+            let end_x = if n == threads - 1 { w } else { (n + 1) * lenx };
 
             let world = wrld_arc.clone();
             let ctx = ctx_arc.clone();
@@ -56,7 +58,6 @@ pub fn render_threaded(context: &RenderContext,
             scope.spawn(move |_| {
                 for x in start_x..end_x {
                     for y in 0..leny {
-
                         let pixel = render_op(&ctx, &world, x as usize, y as usize);
 
                         // REVIEW: would love to turn this into a macro, if only there were time.
@@ -64,15 +65,14 @@ pub fn render_threaded(context: &RenderContext,
                         let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
                         let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
                         tx.send((x, y, Rgb([r, g, b]))).unwrap();
-
                     }
                 }
             });
         }
-
-    }).map_err(|source| {
+    })
+    .map_err(|source| {
         error!("Thread error: {:?}", source);
-        ComputeError::ThreadPanickedError 
+        ComputeError::ThreadPanickedError
     })?;
 
     for _ in 0..(w * h) {
@@ -83,20 +83,23 @@ pub fn render_threaded(context: &RenderContext,
     Ok(())
 }
 
-
-/// Renders the naive algorithm. It's a simple single threaded loop over all the 
+/// Renders the naive algorithm. It's a simple single threaded loop over all the
 /// pixels in the image. This is not likely to be used within the scope of this project,
 /// however, if it were to be extended to where the tiling and threading were handled
-/// on a per process basis, this could be useful. Additionally, it's useful as a 
+/// on a per process basis, this could be useful. Additionally, it's useful as a
 /// testing and performance baseline.
-/// 
+///
 /// Parameters:
 /// * `context` - The render context that contains the information necessary to render the image.
 /// * `world` - The scene to render.
 /// * `img` - The image buffer to write to.
-pub fn render_naive(context: &RenderContext, world: &Region, img: &mut RgbImage, render_op: RenderPixelOp) {
-
-    // already covered by checks on the public api, but here to keep the internal 
+pub fn render_naive(
+    context: &RenderContext,
+    world: &Region,
+    img: &mut RgbImage,
+    render_op: RenderPixelOp,
+) {
+    // already covered by checks on the public api, but here to keep the internal
     // consistency
     debug_check!(img.width() > 0);
     debug_check!(img.height() > 0);
@@ -112,28 +115,27 @@ pub fn render_naive(context: &RenderContext, world: &Region, img: &mut RgbImage,
 
             let r = (render_op::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
             let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
-            let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;    
+            let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
             img.put_pixel(x, y, Rgb([r, g, b]));
-
         }
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::renderer::core::color::Color;
     use crate::renderer::scene::camera::Camera;
     use crate::renderer::scene::world::Region;
-    use crate::renderer::core::color::Color;
-    use image::{RgbImage, ImageBuffer};
+    use image::{ImageBuffer, RgbImage};
 
     // Render a bizarre value out for testing purposes.
     pub fn render_test_pixel(
-        _ctx_arc: &RenderContext, 
-        _world: &Region, 
-        x: usize, y: usize) -> Color {
+        _ctx_arc: &RenderContext,
+        _world: &Region,
+        x: usize,
+        y: usize,
+    ) -> Color {
         Color::new(0.013 * (x as f32), 0.017 * (y as f32), 0.21)
     }
 
@@ -172,12 +174,20 @@ mod tests {
         render_naive(&ctx, &r, &mut img, render_test_pixel);
 
         for (x, y, pixel) in img.enumerate_pixels() {
-            assert_eq!(pixel[0], (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8);
-            assert_eq!(pixel[1], (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8);
-            assert_eq!(pixel[2], (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(
+                pixel[0],
+                (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8
+            );
+            assert_eq!(
+                pixel[1],
+                (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8
+            );
+            assert_eq!(
+                pixel[2],
+                (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8
+            );
         }
     }
-
 
     #[test]
     fn test_render_full_threaded() {
@@ -192,18 +202,26 @@ mod tests {
         }
 
         for (x, y, pixel) in img.enumerate_pixels() {
-            assert_eq!(pixel[0], (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8);
-            assert_eq!(pixel[1], (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8);
-            assert_eq!(pixel[2], (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(
+                pixel[0],
+                (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8
+            );
+            assert_eq!(
+                pixel[1],
+                (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8
+            );
+            assert_eq!(
+                pixel[2],
+                (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8
+            );
         }
     }
 
     // Bugfix: <bug tracking number>: this test will hang if the bug is reintroduced
-    // Review: This shows my basic maintenance workflow, 
+    // Review: This shows my basic maintenance workflow,
     // this test was added first to reproduce the problem, then the fix was added.
     #[test]
     fn test_render_width_not_multiple_of_threads() {
-
         let cpus = num_cpus::get() as u32;
         let w = cpus * 10 + (cpus - 1);
         let h = w;
@@ -218,10 +236,18 @@ mod tests {
         }
 
         for (x, y, pixel) in img.enumerate_pixels() {
-            assert_eq!(pixel[0], (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8);
-            assert_eq!(pixel[1], (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8);
-            assert_eq!(pixel[2], (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8);
+            assert_eq!(
+                pixel[0],
+                (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8
+            );
+            assert_eq!(
+                pixel[1],
+                (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8
+            );
+            assert_eq!(
+                pixel[2],
+                (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8
+            );
         }
     }
-
 }
