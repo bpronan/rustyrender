@@ -1,10 +1,12 @@
 extern crate image;
 
 use anyhow::Context;
-use image::{ImageBuffer, RgbImage};
+use image::ColorType;
+use image::png::PngEncoder;
 use log::info;
 use parser::FileReaderFactory;
 use renderer::ComputeEnv;
+use std::fs::File;
 
 mod parser;
 mod renderer;
@@ -79,22 +81,26 @@ pub fn run(args: &Args) -> anyhow::Result<()> {
         .context(format!("Unable to parse input file: {}", args.arg_source))?;
     info!("World successfully built!");
 
-    let mut img: RgbImage = ImageBuffer::new(imgx, imgy);
+    //let mut img: RgbImage = ImageBuffer::new(imgx, imgy);
     info!("Output image buffer created.");
 
-    renderer::render(compute_env, samples_per_pixel, max_depth, &world, &mut img)
+    let mut pixels = vec![0; (imgx as usize) * (imgy as usize) * 3];
+
+
+    renderer::render(compute_env, samples_per_pixel, max_depth, &world, &mut pixels, (imgx, imgy))
         .context("Error encountered while rendering image")?;
 
     // create any directories for the output
-    let path = std::path::Path::new(&args.arg_dest);
+    let path = std::path::Path::new(&args.arg_dest); 
     let prefix = path.parent().unwrap();
     if !prefix.exists() {
         std::fs::create_dir_all(prefix).unwrap();
     }
 
     info!("Saving output to {}", args.arg_dest);
-    img.save(&args.arg_dest)
-        .context(format!("Error saving image file {}", args.arg_dest))?;
+    let output = File::create(&args.arg_dest).context(format!("Error saving image file {}", args.arg_dest))?;
+    let encoder = PngEncoder::new(output);
+    encoder.encode(&pixels, imgx as u32, imgy as u32, ColorType::Rgb8)?;
 
     Ok(())
 }

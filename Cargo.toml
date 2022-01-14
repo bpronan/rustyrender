@@ -13,9 +13,8 @@ rand = "0.8.3"
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
 log = "0.4.14"
-num_cpus = "1.13.0"
-crossbeam = "0.8"
 time = "*"
 thiserror = "1.0.30"
 anyhow = "1.0.51"
 docopt = "1.1.1"
+rayon = "1.5"

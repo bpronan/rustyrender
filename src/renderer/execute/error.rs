@@ -10,4 +10,9 @@ pub enum ComputeError {
     // Represents any other io error
     #[error(transparent)]
     CommunicationError(#[from] std::sync::mpsc::RecvError),
+
+    // TODO: Remove this
+    // Represents any other io error
+    #[error(transparent)]
+    IOError(#[from] std::io::Error),
 }

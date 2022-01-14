@@ -27,16 +27,15 @@ impl Camera {
         viewport_height: f32,
         viewport_width: f32,
         focal_length: f32,
-        width: u32,
-        height: u32,
+        bounds: (u32, u32),
     ) -> Camera {
         Camera {
             origin: Point3::new(0.0, 0.0, 0.0),
             horizontal: Vec3::new(viewport_width, 0.0, 0.0),
             vertical: Vec3::new(0.0, viewport_height, 0.0),
             ll_corner: Vec3::new(-0.5 * viewport_width, -0.5 * viewport_height, -focal_length),
-            film_width: width,
-            film_height: height,
+            film_width: bounds.0,
+            film_height: bounds.1,
         }
     }
 
@@ -55,7 +54,7 @@ mod tests {
 
     #[test]
     fn test_camera() {
-        let c = Camera::new(1.0, 1.0, 10.0, 100, 100);
+        let c = Camera::new(1.0, 1.0, 10.0, (100, 100));
 
         let r = c.get_ray(0.0, 0.0);
 
