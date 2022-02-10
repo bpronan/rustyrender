@@ -33,17 +33,6 @@ impl JSONSceneLoader {
 ///
 /// * `filename` - The name of the scene file to parse.
 ///
-/// # Examples
-///
-/// ```
-/// let file_parser = FileReaderFactory::get_file_processor(input_file_path)?;
-/// let world = file_parser.process_file()?;
-/// ```
-///
-/// REVIEW: The above example will cause 'cargo test' to fail. I'm struggling
-/// getting the module wrangling working within the example code, so in the
-/// meantime, run 'cargo test --lib'.
-///
 /// # Errors
 ///
 /// * `FileExtensionError` - A file extension that we have yet to add support for.

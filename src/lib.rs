@@ -1,15 +1,15 @@
 extern crate image;
 
 use anyhow::Context;
-use image::ColorType;
 use image::png::PngEncoder;
+use image::ColorType;
 use log::info;
 use parser::FileReaderFactory;
 use renderer::ComputeEnv;
 use std::fs::File;
 
-mod parser;
-mod renderer;
+pub mod parser;
+pub mod renderer;
 
 /// The usage string on which docopt will base the argument
 /// parsing.
@@ -86,19 +86,26 @@ pub fn run(args: &Args) -> anyhow::Result<()> {
 
     let mut pixels = vec![0; (imgx as usize) * (imgy as usize) * 3];
 
-
-    renderer::render(compute_env, samples_per_pixel, max_depth, &world, &mut pixels, (imgx, imgy))
-        .context("Error encountered while rendering image")?;
+    renderer::render(
+        compute_env,
+        samples_per_pixel,
+        max_depth,
+        &world,
+        &mut pixels,
+        (imgx, imgy),
+    )
+    .context("Error encountered while rendering image")?;
 
     // create any directories for the output
-    let path = std::path::Path::new(&args.arg_dest); 
+    let path = std::path::Path::new(&args.arg_dest);
     let prefix = path.parent().unwrap();
     if !prefix.exists() {
         std::fs::create_dir_all(prefix).unwrap();
     }
 
     info!("Saving output to {}", args.arg_dest);
-    let output = File::create(&args.arg_dest).context(format!("Error saving image file {}", args.arg_dest))?;
+    let output = File::create(&args.arg_dest)
+        .context(format!("Error saving image file {}", args.arg_dest))?;
     let encoder = PngEncoder::new(output);
     encoder.encode(&pixels, imgx as u32, imgy as u32, ColorType::Rgb8)?;
 

@@ -91,15 +91,19 @@ macro_rules! condition_check {
 /// # Examples
 ///
 /// ```
-/// use parser::FileReaderFactory;
-/// use renderer::ComputeEnv;
+/// # use rustyrender::parser::FileReaderFactory;
+/// # use rustyrender::renderer::{ComputeEnv, render};
+/// # let input_file_path = "test_input/one_sphere.json";
+/// # let file_parser = FileReaderFactory::get_file_processor(input_file_path).unwrap();
 ///
-/// let world = file_parser.process_file()?;
-/// let mut img: RgbImage = ImageBuffer::new(imgx, imgy);
-/// renderer::render(compute_env,
-///    imgx, imgy, samples_per_pixel, max_depth, aspect_ratio,
-///    &world, &mut img)?;
-/// img.save(&args.arg_dest)?;
+/// let world = file_parser.process_file().unwrap();
+/// let imgx = 200;
+/// let imgy = 200;
+/// let mut pixels = vec![0; (imgx as usize) * (imgy as usize) * 3];
+///
+/// render(ComputeEnv::Multicore,
+///    10, 50,
+///    &world, &mut pixels, (imgx, imgy));
 /// ```
 ///
 /// REVIEW: The above example will cause 'cargo test' to fail. I'm struggling
