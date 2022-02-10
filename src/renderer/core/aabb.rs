@@ -4,7 +4,7 @@ use crate::renderer::core::vector::Point3;
 use serde::{Deserialize, Serialize};
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
-pub struct AABB {
+pub struct Aabb {
     pub box_min: Point3,
     pub box_max: Point3,
 }
@@ -38,21 +38,18 @@ macro_rules! min {
 /// An implementation of an axis-aligned bounding box. This
 /// can be used for quickly checking whether an object or region
 /// has any intersections before trying to find out hit information.
-impl AABB {
+impl Aabb {
     /// Creates an AABB from the two points specified.
     ///
     /// Params:
     /// * `box_min` - The lower left front most point of the box.
     /// * `box_max` - the upper right back most point of the box.
-    pub fn new(box_min: Point3, box_max: Point3) -> AABB {
-        AABB {
-            box_min: box_min,
-            box_max: box_max,
-        }
+    pub fn new(box_min: Point3, box_max: Point3) -> Aabb {
+        Aabb { box_min, box_max }
     }
 
     /// Expands the bounding box to include other.
-    pub fn expand(&mut self, other: AABB) {
+    pub fn expand(&mut self, other: Aabb) {
         self.box_min.x = min!(other.box_min.x, self.box_min.x);
         self.box_min.y = min!(other.box_min.y, self.box_min.y);
         self.box_min.z = min!(other.box_min.z, self.box_min.z);
@@ -81,7 +78,7 @@ impl AABB {
         tmin = max!(tmin, min!(tz1, tz2));
         tmax = min!(tmax, max!(tz1, tz2));
 
-        return tmax >= max!(0.0, tmin) && tmin < t;
+        tmax >= max!(0.0, tmin) && tmin < t
     }
 }
 
@@ -93,8 +90,8 @@ mod tests {
 
     #[test]
     fn test_boxes() {
-        let mut b1 = AABB::new(Point3::new(1.0, 2.0, 3.0), Point3::new(6.0, 6.0, 6.0));
-        let b2 = AABB::new(Point3::new(-1.0, -2.0, -3.0), Point3::new(4.0, 10.0, 4.0));
+        let mut b1 = Aabb::new(Point3::new(1.0, 2.0, 3.0), Point3::new(6.0, 6.0, 6.0));
+        let b2 = Aabb::new(Point3::new(-1.0, -2.0, -3.0), Point3::new(4.0, 10.0, 4.0));
 
         b1.expand(b2);
 
@@ -105,7 +102,7 @@ mod tests {
         assert_eq!(b1.box_max.y, 10.0);
         assert_eq!(b1.box_max.z, 6.0);
 
-        let b3 = AABB::new(Point3::new(1.0, -4.0, 3.0), Point3::new(10.0, 4.0, 10.0));
+        let b3 = Aabb::new(Point3::new(1.0, -4.0, 3.0), Point3::new(10.0, 4.0, 10.0));
 
         b1.expand(b3);
 
@@ -116,7 +113,7 @@ mod tests {
         assert_eq!(b1.box_max.y, 10.0);
         assert_eq!(b1.box_max.z, 10.0);
 
-        let b4 = AABB::new(
+        let b4 = Aabb::new(
             Point3::new(-10.0, -4.0, -10.0),
             Point3::new(10.0, 10.0, 10.0),
         );
@@ -130,7 +127,7 @@ mod tests {
         assert_eq!(b1.box_max.y, 10.0);
         assert_eq!(b1.box_max.z, 10.0);
 
-        let b1 = AABB::new(Point3::new(-1.0, -1.0, -3.0), Point3::new(1.0, 1.0, -4.0));
+        let b1 = Aabb::new(Point3::new(-1.0, -1.0, -3.0), Point3::new(1.0, 1.0, -4.0));
         let r = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
         assert!(b1.hit(&r, f32::INFINITY));
         let r = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(10.0, 10.0, -1.0));

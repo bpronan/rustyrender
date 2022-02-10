@@ -1,4 +1,4 @@
-use crate::renderer::core::aabb::AABB;
+use crate::renderer::core::aabb::Aabb;
 use crate::renderer::core::color;
 use crate::renderer::core::color::Color;
 use crate::renderer::core::ray::Ray;
@@ -17,7 +17,7 @@ use crate::renderer::scene::hittable::{HitRecord, Hittable};
 // marshall this region/world struct
 pub struct Region {
     pub objects: Vec<Box<dyn Hittable + Sync>>,
-    bounding_box: AABB,
+    bounding_box: Aabb,
     bg_color: Color,
 }
 
@@ -28,11 +28,11 @@ impl Region {
     pub fn new(bg_color: Color) -> Region {
         Region {
             objects: Vec::new(),
-            bounding_box: AABB::new(
+            bounding_box: Aabb::new(
                 Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
                 Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
             ),
-            bg_color: bg_color,
+            bg_color,
         }
     }
 
@@ -81,7 +81,7 @@ impl Hittable for Region {
         hit_anything
     }
 
-    fn bounds(&self) -> AABB {
+    fn bounds(&self) -> Aabb {
         // the bounding box has been updated on insertion of the objects, so
         // just return it.
         self.bounding_box
@@ -96,7 +96,7 @@ mod tests {
     use crate::renderer::scene::hittable::Hittable;
 
     struct MockObject {
-        bounds: AABB,
+        bounds: Aabb,
         should_hit: bool,
         expect: bool,
     }
@@ -110,7 +110,7 @@ mod tests {
             self.should_hit
         }
 
-        fn bounds(&self) -> AABB {
+        fn bounds(&self) -> Aabb {
             self.bounds
         }
     }
@@ -118,7 +118,7 @@ mod tests {
     #[test]
     fn test_region_bounds() {
         let mock_obj = MockObject {
-            bounds: AABB::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
+            bounds: Aabb::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
             should_hit: false,
             expect: false,
         };
@@ -135,7 +135,7 @@ mod tests {
         assert_eq!(r.bounding_box.box_max.z, 16.0);
 
         let mock_obj = MockObject {
-            bounds: AABB::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
+            bounds: Aabb::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
             should_hit: true,
             expect: true,
         };
@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn test_region_hit() {
         let mock_obj = MockObject {
-            bounds: AABB::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
+            bounds: Aabb::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
             should_hit: false,
             expect: false,
         };
@@ -168,7 +168,7 @@ mod tests {
         assert!(!r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
 
         let mock_obj = MockObject {
-            bounds: AABB::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
+            bounds: Aabb::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
             should_hit: true,
             expect: true,
         };

@@ -10,9 +10,7 @@ use super::render_op;
 
 use rayon::prelude::*;
 
-
 type RenderPixelOp = fn(&RenderContext, &Region, usize, usize) -> Color;
-
 
 /// Renders the multicore version of the algorithm using a set of n threads
 /// and a mpsc channel to collect the pixels into the output.
@@ -35,29 +33,23 @@ pub fn render_threaded(
     debug_check!(pixels.len() == (bounds.0 as usize * bounds.1 as usize * 3));
 
     let w = bounds.0 as usize;
-    
+
     //let mut pixels = img.into_raw();
-    let bands: Vec<(usize, &mut [u8])> = pixels.chunks_mut(w * 3)
-        .enumerate()
-        .collect();
+    let bands: Vec<(usize, &mut [u8])> = pixels.chunks_mut(w * 3).enumerate().collect();
 
     bands.into_par_iter().for_each(|(i, band)| {
-
         for x in 0..w {
-        
-            let pixel = render_op(&context, &world, x as usize, i as usize);
-    
+            let pixel = render_op(context, world, x as usize, i as usize);
+
             // REVIEW: would love to turn this into a macro, if only there were time.
             let r = (render_op::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
             let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
             let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
-    
+
             band[x * 3] = r;
             band[x * 3 + 1] = g;
             band[x * 3 + 2] = b;
-            
         }
-
     });
 
     Ok(())
@@ -99,7 +91,7 @@ pub fn render_naive(
             let r = (render_op::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
             let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
             let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
-            pixels[(y as usize * w + x as usize) * 3 + 0] = r;
+            pixels[(y as usize * w + x as usize) * 3] = r;
             pixels[(y as usize * w + x as usize) * 3 + 1] = g;
             pixels[(y as usize * w + x as usize) * 3 + 2] = b;
         }
@@ -161,7 +153,6 @@ mod tests {
 
         for y in 0..2 {
             for x in 0..2 {
-
                 assert_eq!(
                     img[3 * (2 * y + x) + 0],
                     (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8
@@ -176,7 +167,6 @@ mod tests {
                 );
             }
         }
-
     }
 
     #[test]
@@ -206,5 +196,4 @@ mod tests {
             );
         }
     }
-
 }

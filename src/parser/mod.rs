@@ -44,24 +44,17 @@ impl FileReaderFactory {
     /// For example, fbx, json, xml, etc.
     /// * `ReadError` - Represents a file read error
     /// * `IOError` - Represents any other io error
-    pub fn get_file_processor(filename: &String) -> BoxResult<Box<dyn SceneLoader>> {
-        info!("Opening file {}", filename.to_string());
+    pub fn get_file_processor(filename: &str) -> BoxResult<Box<dyn SceneLoader>> {
+        info!("Opening file {}", filename);
 
-        let msg;
         match Path::new(filename).extension().and_then(OsStr::to_str) {
-            Some(extension) => match extension {
-                "json" => return Ok(Box::new(JSONSceneLoader::new(filename))),
-                _ => {
-                    msg = "Unknown file extension on the input file";
-                }
-            },
-            None => {
-                msg = "Unknown file extension on the input file";
+            Some("json") => Ok(Box::new(JSONSceneLoader::new(filename))),
+            _ => {
+                error!("Unknown file extension on the input file ");
+                Err(ParserError::FileExtension)
             }
         }
 
-        error!("{}", msg);
-        return Err(ParserError::FileExtensionError);
     }
 }
 

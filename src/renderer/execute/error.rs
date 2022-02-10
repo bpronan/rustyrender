@@ -5,14 +5,14 @@ use thiserror::Error;
 pub enum ComputeError {
     // Represents an issue, defect or system issue, within the render threads.
     #[error("A compute thread panicked.")]
-    ThreadPanickedError,
+    ThreadPanicked,
 
     // Represents any other io error
     #[error(transparent)]
-    CommunicationError(#[from] std::sync::mpsc::RecvError),
+    Communication(#[from] std::sync::mpsc::RecvError),
 
     // TODO: Remove this
     // Represents any other io error
     #[error(transparent)]
-    IOError(#[from] std::io::Error),
+    IO(#[from] std::io::Error),
 }

@@ -37,23 +37,37 @@ pub enum RendererError {
     #[error(
         "You must provide a buffer of with dimensions greater than 0 or less than equal to 4096."
     )]
-    BufferSizeError,
+    BufferSize,
 
     #[error("Samples per pixel and max depth must be greater than 0.")]
-    InvalidParameterError,
+    InvalidParameter,
 
     #[error("Empty scene file.")]
-    InvalidSceneError,
+    InvalidScene,
 }
 
 /// This macro takes an expression as an argument and will
 /// log to error and panic on debug only. This is useful for
 /// precondition checks for external APIs.
+#[cfg(not(debug_assertions))]
 macro_rules! condition_check {
     ($expression:expr, $error:expr) => {
         if ($expression) {
             error!("API precondition check failed: {}", stringify!($expression));
             return Err($error);
+        }
+    };
+}
+
+#[cfg(debug_assertions)]
+macro_rules! condition_check {
+    ($expression:expr, $error:expr) => {
+        if ($expression) {
+            panic!(
+                "API precondition check failed: {}, error code: {}",
+                stringify!($expression),
+                $error
+            );
         }
     };
 }
@@ -104,20 +118,17 @@ pub fn render(
     max_depth: u32,
     world: &Region,
     pixels: &mut [u8],
-    bounds: (u32, u32)
+    bounds: (u32, u32),
 ) -> Result<(), RendererError> {
     // precondition checks
-    condition_check!(samples_per_pixel == 0, RendererError::InvalidParameterError);
-    condition_check!(max_depth == 0, RendererError::InvalidParameterError);
-    condition_check!(
-        bounds.0 == 0 || bounds.1 == 0,
-        RendererError::BufferSizeError
-    );
+    condition_check!(samples_per_pixel == 0, RendererError::InvalidParameter);
+    condition_check!(max_depth == 0, RendererError::InvalidParameter);
+    condition_check!(bounds.0 == 0 || bounds.1 == 0, RendererError::BufferSize);
     condition_check!(
         bounds.0 > 4096 || bounds.1 > 4096,
-        RendererError::BufferSizeError
+        RendererError::BufferSize
     );
-    condition_check!(world.objects.len() == 0, RendererError::InvalidSceneError);
+    condition_check!(world.objects.is_empty(), RendererError::InvalidScene);
 
     let aspect_ratio = bounds.0 as f32 / bounds.1 as f32;
 
@@ -127,7 +138,7 @@ pub fn render(
         samples_per_pixel,
         0,
         0,
-        bounds.0, 
+        bounds.0,
         bounds.1,
     );
 
@@ -136,19 +147,19 @@ pub fn render(
     match env {
         ComputeEnv::Naive => {
             info!("Executing naive implementation.");
-            cpurender::render_naive(&context, &world, pixels, bounds, render_op::render_pixel);
+            cpurender::render_naive(&context, world, pixels, bounds, render_op::render_pixel);
         }
         ComputeEnv::Cuda => {
             info!("Executing CUDA implementation.");
-            gpurender::render_cuda(&context, &world, pixels, bounds)?;
+            gpurender::render_cuda(&context, world, pixels, bounds)?;
         }
         ComputeEnv::Opencl => {
             info!("Executing OpenCL implementation.");
-            gpurender::render_opencl(&context, &world, pixels, bounds)?
+            gpurender::render_opencl(&context, world, pixels, bounds)?
         }
         _ => {
             info!("Executing Mulithreading implementation.");
-            cpurender::render_threaded(&context, &world, pixels, bounds, render_op::render_pixel)?
+            cpurender::render_threaded(&context, world, pixels, bounds, render_op::render_pixel)?
         }
     };
     info!("Rendering execution time: {:?}", start.elapsed());

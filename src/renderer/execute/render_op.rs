@@ -46,7 +46,7 @@ fn ray_color_it(r: &Ray, world: &Region, max_depth: u32) -> Color {
         front_face: false,
     };
 
-    let mut color = color::BLACK.clone();
+    let mut color = color::BLACK;
     let mut curr_ray = *r;
 
     for n in 0..max_depth {

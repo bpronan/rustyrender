@@ -1,4 +1,4 @@
-use crate::renderer::core::aabb::AABB;
+use crate::renderer::core::aabb::Aabb;
 use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector;
 use crate::renderer::core::vector::Point3;
@@ -49,8 +49,8 @@ impl Hittable for Sphere {
         true
     }
 
-    fn bounds(&self) -> AABB {
-        AABB::new(self.center - self.radius, self.center + self.radius)
+    fn bounds(&self) -> Aabb {
+        Aabb::new(self.center - self.radius, self.center + self.radius)
     }
 }
 

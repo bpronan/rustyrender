@@ -1,4 +1,4 @@
-use crate::renderer::core::aabb::AABB;
+use crate::renderer::core::aabb::Aabb;
 use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector;
 use crate::renderer::core::vector::{Point3, Vec3};
@@ -75,5 +75,5 @@ pub trait Hittable {
     fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool;
 
     /// Returns the axis aligned bounding box of this object.
-    fn bounds(&self) -> AABB;
+    fn bounds(&self) -> Aabb;
 }

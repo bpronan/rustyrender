@@ -18,9 +18,9 @@ pub struct JSONSceneLoader {
 }
 
 impl JSONSceneLoader {
-    pub fn new(filenameref: &String) -> JSONSceneLoader {
+    pub fn new(filename: &str) -> JSONSceneLoader {
         JSONSceneLoader {
-            filename: filenameref.clone(),
+            filename: filename.to_string(),
         }
     }
 }
@@ -57,7 +57,7 @@ impl SceneLoader for JSONSceneLoader {
         info!("Parsing world filename {}", self.filename);
         if !Path::new(&self.filename).exists() {
             error!("World input file does not exist at {}", self.filename);
-            return Err(ParserError::FileNotFoundError);
+            return Err(ParserError::FileNotFound);
         }
 
         // REVIEW: would love to have the parser deserialize the world without
@@ -77,7 +77,7 @@ impl SceneLoader for JSONSceneLoader {
         let contents = fs::read_to_string(&self.filename)?;
 
         let world_object: WorldStruct = serde_json::from_str(&contents)
-            .map_err(|source| ParserError::FormatCorruptedError { source })?;
+            .map_err(|source| ParserError::FormatCorrupted { source })?;
 
         // World
         let mut world = Region::new(world_object.background);

@@ -13,9 +13,9 @@ impl Ray {
         let invdir = 1.0 / dir;
 
         Ray {
-            orig: orig,
-            dir: dir,
-            invdir: invdir,
+            orig,
+            dir,
+            invdir,
         }
     }
 
