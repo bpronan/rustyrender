@@ -106,10 +106,6 @@ macro_rules! condition_check {
 ///    &world, &mut pixels, (imgx, imgy));
 /// ```
 ///
-/// REVIEW: The above example will cause 'cargo test' to fail. I'm struggling
-/// getting the module wrangling working within the example code, so in the
-/// meantime, run 'cargo test --lib'.
-///
 /// # Errors
 ///
 /// * `InvalideParameterError` - A parameter is within an invalid range.

@@ -67,18 +67,3 @@ fn ray_color_it(r: &Ray, world: &Region, max_depth: u32) -> Color {
 
     color
 }
-
-/// Clamp a value between min and max.
-///
-/// REVIEW: This should probably be pushed into a math library, but
-/// would (probably) lose its inline abilities.
-#[inline]
-pub fn clamp(x: f32, min: f32, max: f32) -> f32 {
-    if x < min {
-        return min;
-    }
-    if x > max {
-        return max;
-    }
-    x
-}

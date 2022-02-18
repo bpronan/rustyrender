@@ -22,4 +22,36 @@ macro_rules! debug_check {
     };
 }
 
+/// Clamp a value between min and max.
+#[inline]
+pub fn clamp(x: f32, min: f32, max: f32) -> f32 {
+    if x < min {
+        return min;
+    }
+    if x > max {
+        return max;
+    }
+    x
+}
+
+#[inline]
+pub fn convert_pixel(pixel: vector::Vec3) -> (u8, u8, u8) {
+    (
+        (clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8,
+        (clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8,
+        (clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8,
+    )
+}
+
+macro_rules! write_pixel {
+    ($pixel:expr, $out:expr, $location:expr) => {{
+        let (r, g, b) = convert_pixel($pixel);
+
+        $out[$location * 3] = r;
+        $out[$location * 3 + 1] = g;
+        $out[$location * 3 + 2] = b;
+    }};
+}
+
 pub(crate) use debug_check;
+pub(crate) use write_pixel;

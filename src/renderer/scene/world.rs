@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use crate::renderer::core::aabb::Aabb;
 use crate::renderer::core::color;
 use crate::renderer::core::color::Color;
@@ -15,24 +17,25 @@ use crate::renderer::scene::hittable::{HitRecord, Hittable};
 ///
 // REVIEW: Here's where we would write the custom serde juice to
 // marshall this region/world struct
+#[derive(Serialize, Deserialize)]
 pub struct Region {
-    pub objects: Vec<Box<dyn Hittable + Sync>>,
+    pub objects: Vec<Box<dyn Hittable>>,
     bounding_box: Aabb,
-    bg_color: Color,
+    background_color: Color,
 }
 
 impl Region {
     /// Create a new empty region with the specified background color.
     /// The background color will be used when the ray doesn't intersect
     /// anything.
-    pub fn new(bg_color: Color) -> Region {
+    pub fn new(background_color: Color) -> Region {
         Region {
             objects: Vec::new(),
             bounding_box: Aabb::new(
                 Point3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
                 Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
             ),
-            bg_color,
+            background_color,
         }
     }
 
@@ -53,11 +56,18 @@ impl Region {
     pub fn background_color(&self, r: &Ray) -> Color {
         let unit_direction = vector::unit_vector(&r.dir);
         let t = 0.5 * (unit_direction.y + 1.0);
-        color::lerp(color::WHITE, self.bg_color, t)
+        color::lerp(color::WHITE, self.background_color, t)
+    }
+
+    pub fn recalculate_bounds(&mut self) {
+        for obj in self.objects.iter() {
+            self.bounding_box.expand(obj.bounds());
+        }
     }
 }
 
 /// The region implements the hittable trait as well.
+#[typetag::serde]
 impl Hittable for Region {
     fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {
         // if we don't hit the world bounding box, return right away
@@ -66,7 +76,7 @@ impl Hittable for Region {
         }
 
         // otherwise, loop through all the objects contained within.
-        let mut hit_temp = HitRecord::new();
+        let mut hit_temp = HitRecord::default();
         let mut hit_anything = false;
         let mut closest_so_far = t_max;
 
@@ -95,6 +105,7 @@ mod tests {
     use crate::renderer::core::vector::Vec3;
     use crate::renderer::scene::hittable::Hittable;
 
+    #[derive(Serialize, Deserialize)]
     struct MockObject {
         bounds: Aabb,
         should_hit: bool,
@@ -103,6 +114,7 @@ mod tests {
 
     unsafe impl Sync for MockObject {}
 
+    #[typetag::serde]
     impl Hittable for MockObject {
         fn hit(&self, _r: &Ray, _t_min: f32, _t_max: f32, _rec: &mut HitRecord) -> bool {
             assert!(self.expect);
@@ -164,7 +176,7 @@ mod tests {
         r.push(b_mock);
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
-        let mut rec = HitRecord::new();
+        let mut rec = HitRecord::default();
         assert!(!r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
 
         let mock_obj = MockObject {
@@ -179,7 +191,7 @@ mod tests {
         r.push(b_mock);
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
-        let mut rec = HitRecord::new();
+        let mut rec = HitRecord::default();
         assert!(r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
     }
 }

@@ -1,12 +1,10 @@
-use crate::renderer::core::color::Color;
-use crate::renderer::core::debug_check;
+use crate::renderer::core::{color::Color, convert_pixel, debug_check, write_pixel};
 use crate::renderer::scene::world::Region;
 
 use log::error;
 
 use super::context::RenderContext;
 use super::error::ComputeError;
-use super::render_op;
 
 use rayon::prelude::*;
 
@@ -41,14 +39,7 @@ pub fn render_threaded(
         for x in 0..w {
             let pixel = render_op(context, world, x as usize, i as usize);
 
-            // REVIEW: would love to turn this into a macro, if only there were time.
-            let r = (render_op::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
-            let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
-            let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
-
-            band[x * 3] = r;
-            band[x * 3 + 1] = g;
-            band[x * 3 + 2] = b;
+            write_pixel!(pixel, band, x);
         }
     });
 
@@ -88,12 +79,7 @@ pub fn render_naive(
         for x in s_x..e_x {
             let pixel = render_op(context, world, x as usize, y as usize);
 
-            let r = (render_op::clamp(f32::sqrt(pixel.x), 0.0, 0.999) * 256.0) as u8;
-            let g = (render_op::clamp(f32::sqrt(pixel.y), 0.0, 0.999) * 256.0) as u8;
-            let b = (render_op::clamp(f32::sqrt(pixel.z), 0.0, 0.999) * 256.0) as u8;
-            pixels[(y as usize * w + x as usize) * 3] = r;
-            pixels[(y as usize * w + x as usize) * 3 + 1] = g;
-            pixels[(y as usize * w + x as usize) * 3 + 2] = b;
+            write_pixel!(pixel, pixels, (y as usize * w + x as usize));
         }
     }
 }
@@ -101,7 +87,7 @@ pub fn render_naive(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::renderer::core::color::Color;
+    use crate::renderer::core::{color::Color, vector::Vec3};
     use crate::renderer::scene::camera::Camera;
     use crate::renderer::scene::world::Region;
     use image::{ImageBuffer, RgbImage};
@@ -153,18 +139,14 @@ mod tests {
 
         for y in 0..2 {
             for x in 0..2 {
-                assert_eq!(
-                    img[3 * (2 * y + x) + 0],
-                    (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8
-                );
-                assert_eq!(
-                    img[3 * (2 * y + x) + 1],
-                    (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8
-                );
-                assert_eq!(
-                    img[3 * (2 * y + x) + 2],
-                    (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8
-                );
+                let (r, g, b) = convert_pixel(Vec3 {
+                    x: 0.013 * (x as f32),
+                    y: 0.017 * (y as f32),
+                    z: 0.21,
+                });
+                assert_eq!(img[3 * (2 * y + x) + 0], r);
+                assert_eq!(img[3 * (2 * y + x) + 1], g);
+                assert_eq!(img[3 * (2 * y + x) + 2], b);
             }
         }
     }
@@ -182,18 +164,14 @@ mod tests {
         }
 
         for (x, y, pixel) in img.enumerate_pixels() {
-            assert_eq!(
-                pixel[0],
-                (render_op::clamp(f32::sqrt(0.013 * (x as f32)), 0.0, 0.999) * 256.0) as u8
-            );
-            assert_eq!(
-                pixel[1],
-                (render_op::clamp(f32::sqrt(0.017 * (y as f32)), 0.0, 0.999) * 256.0) as u8
-            );
-            assert_eq!(
-                pixel[2],
-                (render_op::clamp(f32::sqrt(0.21), 0.0, 0.999) * 256.0) as u8
-            );
+            let (r, g, b) = convert_pixel(Vec3 {
+                x: 0.013 * (x as f32),
+                y: 0.017 * (y as f32),
+                z: 0.21,
+            });
+            assert_eq!(pixel[0], r);
+            assert_eq!(pixel[1], g);
+            assert_eq!(pixel[2], b);
         }
     }
 }

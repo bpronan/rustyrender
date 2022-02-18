@@ -26,16 +26,6 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    /// Creates a clean new HitRecord that's ready to populate.
-    pub fn new() -> HitRecord {
-        HitRecord {
-            p: Point3::new(0.0, 0.0, 0.0),
-            normal: Vec3::new(0.0, 0.0, 0.0),
-            t: f32::INFINITY,
-            front_face: false,
-        }
-    }
-
     /// Sets the face normal according to whether the intersection
     /// was on the front or the back face.
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vec3) {
@@ -58,9 +48,21 @@ impl HitRecord {
     }
 }
 
+impl Default for HitRecord {
+    fn default() -> Self {
+        Self {
+            p: Point3::new(0.0, 0.0, 0.0),
+            normal: Vec3::new(0.0, 0.0, 0.0),
+            t: f32::INFINITY,
+            front_face: false,
+        }
+    }
+}
+
 /// The base trait for all renderable object types in the scene. Any new
 /// scene object should implement this trait.
-pub trait Hittable {
+#[typetag::serde(tag = "type")]
+pub trait Hittable: Sync {
     /// The meat of the ray tracing algorithm for each object. The object
     /// must implement this function to calculate where the ray intersects
     /// it and return back the correct information in the output rec parameter.

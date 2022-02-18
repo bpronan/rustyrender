@@ -31,10 +31,6 @@ type BoxResult<T> = Result<T, ParserError>;
 /// let world = file_parser.process_file().unwrap();
 /// ```
 ///
-/// REVIEW: The above example will cause 'cargo test' to fail. I'm struggling
-/// getting the module wrangling working within the example code, so in the
-/// meantime, run 'cargo test --lib'.
-///
 /// # Errors
 ///
 /// * `FileExtensionError` - A file extension that we have yet to add support for.

@@ -15,6 +15,7 @@ pub struct Sphere {
     pub radius: f32,
 }
 
+#[typetag::serde]
 impl Hittable for Sphere {
     /// Calculates a sphere hit.
     /// Solves dot((r.orig + t * r.dir - center), (r.orig + t * r.dir - center)) = r^2 to do so.
@@ -61,7 +62,7 @@ mod tests {
 
     #[test]
     fn test_sphere_hit() {
-        let mut rec = HitRecord::new();
+        let mut rec = HitRecord::default();
 
         let s1 = Sphere {
             center: Point3::new(0.0, 0.0, -10.0),

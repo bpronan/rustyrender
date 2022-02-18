@@ -1,12 +1,8 @@
 use super::SceneLoader;
 
-use crate::renderer::core::color::Color;
-use crate::renderer::core::vector::Point3;
-use crate::renderer::scene::objects::sphere::Sphere;
 use crate::renderer::scene::world::Region;
 
 use log::{error, info};
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 
@@ -49,35 +45,20 @@ impl SceneLoader for JSONSceneLoader {
             return Err(ParserError::FileNotFound);
         }
 
-        // REVIEW: would love to have the parser deserialize the world without
-        // this intermediary. Ideally, we could extend this to include other
-        // objects without having to change the below code. Currently, that's
-        // not the case.
         // This would be the next major improvement to this library. For a
         // 'real' application, this format would be labored over for at least
         // a week and compared to formats like obj, fbx, collada,
         // and renderman.
-        #[derive(Debug, Deserialize, Serialize)]
-        struct WorldStruct {
-            background: Color,
-            spheres: Vec<Sphere>,
-        }
-
         let contents = fs::read_to_string(&self.filename)?;
 
-        let world_object: WorldStruct = serde_json::from_str(&contents)
-            .map_err(|source| ParserError::FormatCorrupted { source })?;
+        let mut world: Region = serde_json::from_str(&contents).map_err(|source| {
+            println!("{}", source);
+            ParserError::FormatCorrupted { source }
+        })?;
+
+        world.recalculate_bounds();
 
         // World
-        let mut world = Region::new(world_object.background);
-
-        for object in world_object.spheres {
-            world.push(Box::new(Sphere {
-                center: Point3::new(object.center.x, object.center.y, object.center.z),
-                radius: object.radius,
-            }));
-        }
-
         Ok(world)
     }
 }
