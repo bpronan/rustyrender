@@ -14,7 +14,6 @@ use crate::renderer::execute::cpurender;
 use crate::renderer::execute::gpurender;
 use crate::renderer::execute::render_op;
 use crate::renderer::scene::camera::Camera;
-
 use crate::renderer::scene::world::Region;
 
 /// The compute backend to use for the render. Naive
@@ -130,10 +129,10 @@ pub fn render(
     );
     condition_check!(world.objects.is_empty(), RendererError::InvalidScene);
 
-    let aspect_ratio = bounds.0 as f32 / bounds.1 as f32;
+    let camera_config = world.camera_config;
 
     let context = RenderContext::new(
-        Camera::new(2.0, 2.0 * aspect_ratio, 1.0, bounds),
+        Camera::new(camera_config, bounds),
         max_depth,
         samples_per_pixel,
         0,

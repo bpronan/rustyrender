@@ -1,6 +1,7 @@
 use std::f32;
 use std::ops;
 
+use super::math::min;
 use rand::Rng;
 
 use serde::{Deserialize, Serialize};
@@ -45,6 +46,11 @@ impl Vec3 {
             z: rand::thread_rng().gen_range(min..max),
         }
     }
+
+    pub fn near_zero(&self) -> bool {
+        let s: f32 = 1e-8;
+        (f32::abs(self.x) < s) && (f32::abs(self.y) < s) && (f32::abs(self.z) < s)
+    }
 }
 
 /// Typedefing a point to a vector. They are the same in non-homogenous
@@ -58,6 +64,15 @@ pub fn dot(u: &Vec3, v: &Vec3) -> f32 {
     u.x * v.x + u.y * v.y + u.z * v.z
 }
 
+// Calculates the cross product of two vectors.
+pub fn cross(u: &Vec3, v: &Vec3) -> Vec3 {
+    Vec3::new(
+        u.y * v.z - u.z * v.y,
+        u.z * v.x - u.x * v.z,
+        u.x * v.y - u.y * v.x,
+    )
+}
+
 /// Returns a normalized vector pointing in the same
 /// direction as the input.
 pub fn unit_vector(v: &Vec3) -> Vec3 {
@@ -67,12 +82,57 @@ pub fn unit_vector(v: &Vec3) -> Vec3 {
 
 /// Returns a random vector on the surface of the unit sphere
 pub fn random_in_unit_sphere() -> Vec3 {
-    let mut point = Vec3::random_range(-1.0, 1.0);
-    let mag = point.length();
-    let d = rand::thread_rng().gen_range(0.0..(1.0 / mag));
-    point /= d;
+    loop {
+        let p = Vec3::random_range(-1.0, 1.0);
+        if p.length_squared() > 1.0 {
+            continue;
+        }
+        return p;
+    }
+}
 
-    point
+/// Returns a random unit vector
+pub fn random_unit_vector() -> Vec3 {
+    unit_vector(&random_in_unit_sphere())
+}
+
+/// Returns a random vector in a hemisphere
+pub fn random_in_hemisphere(n: &Vec3) -> Vec3 {
+    let unit_sphere = random_in_unit_sphere();
+    if dot(&unit_sphere, n) > 0.0 {
+        unit_sphere
+    } else {
+        -unit_sphere
+    }
+}
+
+pub fn random_in_unit_disk() -> Vec3 {
+    loop {
+        let p = Vec3::new(
+            rand::thread_rng().gen_range(-1.0..1.0),
+            rand::thread_rng().gen_range(-1.0..1.0),
+            0.0,
+        );
+        if p.length_squared() > 1.0 {
+            continue;
+        }
+        return p;
+    }
+}
+
+/// Reflect a ray around a normal
+pub fn reflect(v: &Vec3, n: &Vec3) -> Vec3 {
+    *v - 2.0 * dot(v, n) * *n
+}
+
+/// Refract a ray toward a normal given etai / etat
+pub fn refract(uv: &Vec3, n: &Vec3, etai_over_etat: f32) -> Vec3 {
+    let cos_theta = min!(dot(&-(*uv), n), 1.0);
+
+    let r_out_perp = etai_over_etat * (*uv + cos_theta * *n);
+    let r_out_par = -(1.0 - r_out_perp.length_squared()).abs().sqrt() * *n;
+
+    r_out_perp + r_out_par
 }
 
 /// - operator for a vector

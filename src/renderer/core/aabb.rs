@@ -3,36 +3,12 @@ use crate::renderer::core::vector::Point3;
 
 use serde::{Deserialize, Serialize};
 
+use super::math::{max, min};
+
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct Aabb {
     pub box_min: Point3,
     pub box_max: Point3,
-}
-
-/// Implementation of max since std::cmp::max doesn't work for f32
-macro_rules! max {
-    ($x: expr) => ($x);
-    ($x: expr, $($z: expr),+) => {{
-        let y = max!($($z),*);
-        if $x > y {
-            $x
-        } else {
-            y
-        }
-    }}
-}
-
-/// Implementation of max since std::cmp::max doesn't work for f32
-macro_rules! min {
-    ($x: expr) => ($x);
-    ($x: expr, $($z: expr),+) => {{
-        let y = min!($($z),*);
-        if $x < y {
-            $x
-        } else {
-            y
-        }
-    }}
 }
 
 /// An implementation of an axis-aligned bounding box. This

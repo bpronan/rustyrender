@@ -10,6 +10,9 @@ pub mod vector;
 /// A library containing the representation of a axis aligned bounding box
 pub mod aabb;
 
+// A library with math utility functions
+pub mod math;
+
 /// This macro takes an expression as an argument and will
 /// log to error and panic on debug only. This is useful for
 /// precondition checks for internal APIs.

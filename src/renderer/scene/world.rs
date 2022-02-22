@@ -4,10 +4,12 @@ use crate::renderer::core::aabb::Aabb;
 use crate::renderer::core::color;
 use crate::renderer::core::color::Color;
 use crate::renderer::core::ray::Ray;
-use crate::renderer::core::vector;
 use crate::renderer::core::vector::Point3;
+use crate::renderer::core::vector::{self, Vec3};
 
 use crate::renderer::scene::hittable::{HitRecord, Hittable};
+
+use super::camera::CameraConfig;
 
 /// A data structure representing a region of the scene. This can
 /// be the whole scene or a self-contained portion of the scene.
@@ -22,6 +24,7 @@ pub struct Region {
     pub objects: Vec<Box<dyn Hittable>>,
     bounding_box: Aabb,
     background_color: Color,
+    pub camera_config: CameraConfig,
 }
 
 impl Region {
@@ -36,6 +39,14 @@ impl Region {
                 Point3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
             ),
             background_color,
+            camera_config: CameraConfig {
+                look_from: Vec3::new(0.0, 0.0, 0.0),
+                look_at: Vec3::new(0.0, 0.0, -1.0),
+                up: Vec3::new(0.0, 1.0, 0.0),
+                vertical_fov: 90.0,
+                aperture: 1.0,
+                focal_distance: 1.0,
+            },
         }
     }
 
@@ -59,6 +70,7 @@ impl Region {
         color::lerp(color::WHITE, self.background_color, t)
     }
 
+    /// Recalculate the bounding box for this region
     pub fn recalculate_bounds(&mut self) {
         for obj in self.objects.iter() {
             self.bounding_box.expand(obj.bounds());
@@ -69,26 +81,27 @@ impl Region {
 /// The region implements the hittable trait as well.
 #[typetag::serde]
 impl Hittable for Region {
-    fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool {
+    fn hit(&self, r: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {
         // if we don't hit the world bounding box, return right away
         if !self.bounding_box.hit(r, t_max) {
-            return false;
+            return None;
         }
 
         // otherwise, loop through all the objects contained within.
-        let mut hit_temp = HitRecord::default();
-        let mut hit_anything = false;
         let mut closest_so_far = t_max;
 
+        let mut rec: Option<HitRecord> = None;
+
         for hittable in &self.objects {
-            if hittable.hit(r, t_min, closest_so_far, &mut hit_temp) {
-                hit_anything = true;
-                closest_so_far = hit_temp.t;
-                *rec = hit_temp;
+            match hittable.hit(r, t_min, closest_so_far) {
+                Some(hit) => {
+                    closest_so_far = hit.t;
+                    rec = Some(hit);
+                }
+                None => {}
             }
         }
-
-        hit_anything
+        rec
     }
 
     fn bounds(&self) -> Aabb {
@@ -104,11 +117,11 @@ mod tests {
 
     use crate::renderer::core::vector::Vec3;
     use crate::renderer::scene::hittable::Hittable;
+    use crate::renderer::scene::materials::Material;
 
     #[derive(Serialize, Deserialize)]
     struct MockObject {
         bounds: Aabb,
-        should_hit: bool,
         expect: bool,
     }
 
@@ -116,10 +129,16 @@ mod tests {
 
     #[typetag::serde]
     impl Hittable for MockObject {
-        fn hit(&self, _r: &Ray, _t_min: f32, _t_max: f32, _rec: &mut HitRecord) -> bool {
+        fn hit(&self, _r: &Ray, _t_min: f32, _t_max: f32) -> Option<HitRecord> {
             assert!(self.expect);
 
-            self.should_hit
+            Some(HitRecord {
+                p: Point3::new(0.0, 0.0, 0.0),
+                normal: Vec3::new(0.0, 0.0, 0.0),
+                t: f32::INFINITY,
+                front_face: false,
+                material: &Material::Default,
+            })
         }
 
         fn bounds(&self) -> Aabb {
@@ -131,7 +150,6 @@ mod tests {
     fn test_region_bounds() {
         let mock_obj = MockObject {
             bounds: Aabb::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
-            should_hit: false,
             expect: false,
         };
 
@@ -148,7 +166,6 @@ mod tests {
 
         let mock_obj = MockObject {
             bounds: Aabb::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
-            should_hit: true,
             expect: true,
         };
 
@@ -166,7 +183,6 @@ mod tests {
     fn test_region_hit() {
         let mock_obj = MockObject {
             bounds: Aabb::new(Point3::new(13.0, 0.11, 12.0), Point3::new(17.0, 0.23, 16.0)),
-            should_hit: false,
             expect: false,
         };
 
@@ -176,12 +192,10 @@ mod tests {
         r.push(b_mock);
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
-        let mut rec = HitRecord::default();
-        assert!(!r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
+        assert!(r.hit(&ray, 0.001, f32::INFINITY).is_none());
 
         let mock_obj = MockObject {
             bounds: Aabb::new(Point3::new(-1.0, -1.0, -4.0), Point3::new(1.0, 1.0, -3.0)),
-            should_hit: true,
             expect: true,
         };
 
@@ -191,7 +205,6 @@ mod tests {
         r.push(b_mock);
 
         let ray = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
-        let mut rec = HitRecord::default();
-        assert!(r.hit(&ray, 0.001, f32::INFINITY, &mut rec));
+        assert!(r.hit(&ray, 0.001, f32::INFINITY).is_some());
     }
 }

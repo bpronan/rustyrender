@@ -88,7 +88,7 @@ pub fn render_naive(
 mod tests {
     use super::*;
     use crate::renderer::core::{color::Color, vector::Vec3};
-    use crate::renderer::scene::camera::Camera;
+    use crate::renderer::scene::camera::{Camera, CameraConfig};
     use crate::renderer::scene::world::Region;
     use image::{ImageBuffer, RgbImage};
 
@@ -107,7 +107,25 @@ mod tests {
     #[should_panic]
     fn test_naive_empty_image() {
         let mut img = vec![0; 0];
-        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, (2, 2)), 1, 1, 0, 0, 2, 2);
+        let ctx = RenderContext::new(
+            Camera::new(
+                CameraConfig {
+                    look_from: Vec3::new(0.0, 0.0, 0.0),
+                    look_at: Vec3::new(0.0, 0.0, -1.0),
+                    up: Vec3::new(0.0, 1.0, 0.0),
+                    aperture: 2.0,
+                    focal_distance: 1.0,
+                    vertical_fov: 90.0,
+                },
+                (2, 2),
+            ),
+            1,
+            1,
+            0,
+            0,
+            2,
+            2,
+        );
 
         let r = Region::new(Color::new(0.13, 0.17, 0.23));
 
@@ -118,7 +136,25 @@ mod tests {
     #[should_panic]
     fn test_empty_image() {
         let mut img = vec![0; 0];
-        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, (2, 2)), 1, 1, 0, 0, 2, 2);
+        let ctx = RenderContext::new(
+            Camera::new(
+                CameraConfig {
+                    look_from: Vec3::new(0.0, 0.0, 0.0),
+                    look_at: Vec3::new(0.0, 0.0, -1.0),
+                    up: Vec3::new(0.0, 1.0, 0.0),
+                    aperture: 2.0,
+                    focal_distance: 1.0,
+                    vertical_fov: 90.0,
+                },
+                (2, 2),
+            ),
+            1,
+            1,
+            0,
+            0,
+            2,
+            2,
+        );
 
         let r = Region::new(Color::new(0.13, 0.17, 0.23));
 
@@ -131,8 +167,25 @@ mod tests {
     #[test]
     fn test_render_full_naive() {
         let mut img = vec![0; 2 * 2 * 3];
-        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, (2, 2)), 1, 1, 0, 0, 2, 2);
-
+        let ctx = RenderContext::new(
+            Camera::new(
+                CameraConfig {
+                    look_from: Vec3::new(0.0, 0.0, 0.0),
+                    look_at: Vec3::new(0.0, 0.0, -1.0),
+                    up: Vec3::new(0.0, 1.0, 0.0),
+                    aperture: 2.0,
+                    focal_distance: 1.0,
+                    vertical_fov: 90.0,
+                },
+                (2, 2),
+            ),
+            1,
+            1,
+            0,
+            0,
+            2,
+            2,
+        );
         let r = Region::new(Color::new(1.0, 1.0, 1.0));
 
         render_naive(&ctx, &r, &mut img, (2, 2), render_test_pixel);
@@ -154,8 +207,25 @@ mod tests {
     #[test]
     fn test_render_full_threaded() {
         let mut img: RgbImage = ImageBuffer::new(2, 2);
-        let ctx = RenderContext::new(Camera::new(1.0, 1.0, 1.0, (2, 2)), 1, 1, 0, 0, 2, 2);
-
+        let ctx = RenderContext::new(
+            Camera::new(
+                CameraConfig {
+                    look_from: Vec3::new(0.0, 0.0, 0.0),
+                    look_at: Vec3::new(0.0, 0.0, -1.0),
+                    up: Vec3::new(0.0, 1.0, 0.0),
+                    aperture: 2.0,
+                    focal_distance: 1.0,
+                    vertical_fov: 90.0,
+                },
+                (2, 2),
+            ),
+            1,
+            1,
+            0,
+            0,
+            2,
+            2,
+        );
         let r = Region::new(Color::new(1.0, 1.0, 1.0));
 
         match render_threaded(&ctx, &r, &mut img, (2, 2), render_test_pixel) {

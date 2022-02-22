@@ -4,6 +4,26 @@
         "y": 0.7,
         "z": 1.0
     },
+    "camera_config": {
+        "vertical_fov": 90.0,
+        "look_from": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "look_at": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+        },
+        "up": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+        },
+        "aperture": 0.01,
+        "focal_distance": 1.0
+    },
     "objects": [
         {
             "type": "Sphere",
@@ -12,7 +32,16 @@
                 "y": 0.0,
                 "z": -1.0
             },
-            "radius": 0.5
+            "radius": 0.5,
+            "material": {
+                "lambert": {
+                    "albedo": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.5
+                    }
+                }
+            }
         },
         {
             "type": "Sphere",
@@ -21,7 +50,16 @@
                 "y": -100.5,
                 "z": -1.0
             },
-            "radius": 100.0
+            "radius": 100.0,
+            "material": {
+                "lambert": {
+                    "albedo": {
+                        "x": 0.5,
+                        "y": 0.5,
+                        "z": 0.5
+                    }
+                }
+            }
         }
     ],
     "bounding_box": {

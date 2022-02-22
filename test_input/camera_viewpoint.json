@@ -1,15 +1,15 @@
 {
     "background_color": {
-        "x": 0.7,
-        "y": 0.5,
+        "x": 0.5,
+        "y": 0.7,
         "z": 1.0
     },
     "camera_config": {
         "vertical_fov": 90.0,
         "look_from": {
-            "x": 0.0,
-            "y": 0.0,
-            "z": 0.0
+            "x": -2.0,
+            "y": 2.0,
+            "z": 1.0
         },
         "look_at": {
             "x": 0.0,
@@ -28,35 +28,17 @@
         {
             "type": "Sphere",
             "center": {
-                "x": -0.5,
-                "y": 0.0,
+                "x": 0.0,
+                "y": -100.5,
                 "z": -1.0
             },
-            "radius": 0.4,
+            "radius": 100.0,
             "material": {
                 "lambert": {
                     "albedo": {
-                        "x": 0.5,
-                        "y": 0.0,
-                        "z": 0.5
-                    }
-                }
-            }
-        },
-        {
-            "type": "Sphere",
-            "center": {
-                "x": 0.5,
-                "y": 0.0,
-                "z": -1.0
-            },
-            "radius": 0.4,
-            "material": {
-                "lambert": {
-                    "albedo": {
-                        "x": 0.0,
-                        "y": 0.5,
-                        "z": 0.5
+                        "x": 0.8,
+                        "y": 0.8,
+                        "z": 0.0
                     }
                 }
             }
@@ -65,17 +47,50 @@
             "type": "Sphere",
             "center": {
                 "x": 0.0,
-                "y": -100.4,
+                "y": 0.0,
                 "z": -1.0
             },
-            "radius": 100.0,
+            "radius": 0.5,
             "material": {
                 "lambert": {
                     "albedo": {
-                        "x": 0.5,
-                        "y": 0.5,
-                        "z": 0.5
+                        "x": 0.3,
+                        "y": 0.3,
+                        "z": 0.7
                     }
+                }
+            }
+        },
+        {
+            "type": "Sphere",
+            "center": {
+                "x": -1.0,
+                "y": 0.0,
+                "z": -1.0
+            },
+            "radius": -0.4,
+            "material": {
+                "dielectric": {
+                    "ior": 1.5
+                }
+            }
+        },
+        {
+            "type": "Sphere",
+            "center": {
+                "x": 1.0,
+                "y": 0.0,
+                "z": -1.0
+            },
+            "radius": 0.5,
+            "material": {
+                "metal": {
+                    "albedo": {
+                        "x": 0.8,
+                        "y": 0.6,
+                        "z": 0.2
+                    },
+                    "fuzz": 1.0
                 }
             }
         }

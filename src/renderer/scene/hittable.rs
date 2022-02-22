@@ -2,8 +2,7 @@ use crate::renderer::core::aabb::Aabb;
 use crate::renderer::core::ray::Ray;
 use crate::renderer::core::vector;
 use crate::renderer::core::vector::{Point3, Vec3};
-
-use serde::{Deserialize, Serialize};
+use crate::renderer::scene::materials::Material;
 
 /// A data structure keeping track of the important
 /// information about where the ray hit. Tracks the
@@ -17,15 +16,15 @@ use serde::{Deserialize, Serialize};
 /// ensure objects are sorted in z.
 /// * `front_face` - Whether the hit was on the front face
 /// or the back face of a surface.
-#[derive(Copy, Clone, Serialize, Deserialize)]
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub p: Point3,
     pub normal: Vec3,
     pub t: f32,
     pub front_face: bool,
+    pub material: &'a Material,
 }
 
-impl HitRecord {
+impl HitRecord<'_> {
     /// Sets the face normal according to whether the intersection
     /// was on the front or the back face.
     pub fn set_face_normal(&mut self, r: &Ray, outward_normal: &Vec3) {
@@ -48,17 +47,6 @@ impl HitRecord {
     }
 }
 
-impl Default for HitRecord {
-    fn default() -> Self {
-        Self {
-            p: Point3::new(0.0, 0.0, 0.0),
-            normal: Vec3::new(0.0, 0.0, 0.0),
-            t: f32::INFINITY,
-            front_face: false,
-        }
-    }
-}
-
 /// The base trait for all renderable object types in the scene. Any new
 /// scene object should implement this trait.
 #[typetag::serde(tag = "type")]
@@ -73,8 +61,7 @@ pub trait Hittable: Sync {
     /// prevent calculating hits for internal reflections due to floating point inaccuracy.
     /// * `t_max` - The maximum t value along the ray. Used to avoid drawing objects that are
     /// further away over closer ones.
-    /// * `rec` - An output parameter for keeping the hit information.
-    fn hit(&self, r: &Ray, t_min: f32, t_max: f32, rec: &mut HitRecord) -> bool;
+    fn hit(&self, r: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord>;
 
     /// Returns the axis aligned bounding box of this object.
     fn bounds(&self) -> Aabb;

@@ -24,6 +24,12 @@ pub fn lerp(from: Color, to: Color, t: f32) -> Color {
     (1.0 - t) * from + t * to
 }
 
+impl Default for Color {
+    fn default() -> Self {
+        WHITE
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

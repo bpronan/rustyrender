@@ -74,14 +74,19 @@ pub fn run(args: &Args) -> anyhow::Result<()> {
         None => ComputeEnv::Multicore,
     };
 
-    let file_parser = FileReaderFactory::get_file_processor(&args.arg_source)
-        .context(format!("Unsupported input file type: {}", args.arg_source))?;
-    let world = file_parser
-        .process_file()
-        .context(format!("Unable to parse input file: {}", args.arg_source))?;
+    let file_parser = FileReaderFactory::get_file_processor(&args.arg_source);
+
+    let world = match file_parser {
+        Err(_) => {
+            info!("Unable to find input file, creating default scene");
+            renderer::scene::world_builder::random_scene()
+        }
+        Ok(file) => file
+            .process_file()
+            .context(format!("Unable to parse input file: {}", args.arg_source))?,
+    };
     info!("World successfully built!");
 
-    //let mut img: RgbImage = ImageBuffer::new(imgx, imgy);
     info!("Output image buffer created.");
 
     let mut pixels = vec![0; (imgx as usize) * (imgy as usize) * 3];

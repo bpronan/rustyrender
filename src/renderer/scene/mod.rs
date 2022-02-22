@@ -9,5 +9,9 @@
 
 pub mod camera;
 pub mod hittable;
+pub mod materials;
 pub mod objects;
 pub mod world;
+
+// a utility for building a procedurally generated world
+pub mod world_builder;
