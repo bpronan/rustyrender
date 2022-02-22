@@ -47,22 +47,56 @@ The `--lib` flag is necessary because of compile failures in the example documen
 The program currently only supports a custom JSON file format to specify the scene file. The schema is the following:
 ```json
 {
-    "background": { "x": 0.5, "y": 0.7, "z": 1.0 },
-    "spheres": [
+    "background_color": {
+        "x": 0.5,
+        "y": 0.7,
+        "z": 1.0
+    },
+    "camera_config": {
+        "vertical_fov": 90.0,
+        "look_from": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+        },
+        "look_at": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": -1.0
+        },
+        "up": {
+            "x": 0.0,
+            "y": 1.0,
+            "z": 0.0
+        },
+        "aperture": 0.01,
+        "focal_distance": 1.0
+    },
+    "objects": [
         {
-            "center": { "x": 0.0, "y": 0.0, "z": -1.0 }, 
-            "radius": 0.5
+            "type": "Sphere",
+            "center": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": -1.0
+            },
+            "radius": 0.5,
+            "material": {
+                "lambert": {
+                    "albedo": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.5
+                    }
+                }
+            }
         },
         ...
-        {
-            "center": { "x": 0.0, "y": -100.5, "z": -1.0 },
-            "radius": 100.0
-        }
-    ]
+    }
 }
 ```
 
-The background is a color used to render the sky gradient, it represents the color at the zenith. The horizon will be white.
+The background is a color used to render the sky gradient, it represents the color at the zenith. The horizon will be white. There are three types of materials: lambert, metal, and glass. Consult the test_input files for more about the different options.
 
 ## Project Organization
 
