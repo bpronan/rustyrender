@@ -51,8 +51,7 @@ impl Material {
                 let sin_theta = (1.0 - cos_theta * cos_theta).sqrt();
 
                 let dir = if ref_ratio * sin_theta > 1.0
-                    || Self::reflectance(cos_theta, ref_ratio)
-                        > rand::thread_rng().gen_range(0.0..1.0)
+                    || reflectance(cos_theta, ref_ratio) > rand::thread_rng().gen_range(0.0..1.0)
                 {
                     vector::reflect(&unit_dir, &rec.normal)
                 } else {
@@ -63,14 +62,14 @@ impl Material {
             }
         }
     }
+}
 
-    /// A utility function for calculating the reflectance property of the
-    /// dielectric.
-    #[inline]
-    fn reflectance(cos: f32, ref_idx: f32) -> f32 {
-        let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
-        r0 = r0 * r0;
+/// A utility function for calculating the reflectance property of the
+/// dielectric.
+#[inline]
+fn reflectance(cos: f32, ref_idx: f32) -> f32 {
+    let mut r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+    r0 = r0 * r0;
 
-        r0 + (1.0 - r0) * (1.0 - cos).powi(5)
-    }
+    r0 + (1.0 - r0) * (1.0 - cos).powi(5)
 }

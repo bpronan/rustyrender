@@ -64,21 +64,15 @@ fn ray_color_it(r: &Ray, world: &Region, max_depth: u32) -> Color {
 }
 
 fn ray_color(r: &Ray, world: &Region, depth: u32) -> Color {
-    if depth <= 0 {
+    if depth == 0 {
         return color::BLACK;
     }
 
-    match world.hit(&r, 0.001, f32::INFINITY) {
+    match world.hit(r, 0.001, f32::INFINITY) {
         Some(hit) => match hit.material.scatter(r, &hit) {
-            Some((scattered, attenuation)) => {
-                return attenuation * ray_color(&scattered, world, depth - 1);
-            }
-            None => {
-                return color::BLACK;
-            }
+            Some((scattered, attenuation)) => attenuation * ray_color(&scattered, world, depth - 1),
+            None => color::BLACK,
         },
-        None => {
-            return world.background_color(r);
-        }
+        None => world.background_color(r),
     }
 }

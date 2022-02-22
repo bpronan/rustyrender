@@ -38,9 +38,7 @@ If you would like to use `cargo` to execute the program, it is strongly suggeste
 
 ## Testing
 
-To run the unit tests for the project, use `cargo test --lib`. 
-
-The `--lib` flag is necessary because of compile failures in the example documentation.
+To run the unit tests for the project, use `cargo test`. 
 
 ## Input Formats
 

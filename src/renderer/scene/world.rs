@@ -93,12 +93,9 @@ impl Hittable for Region {
         let mut rec: Option<HitRecord> = None;
 
         for hittable in &self.objects {
-            match hittable.hit(r, t_min, closest_so_far) {
-                Some(hit) => {
-                    closest_so_far = hit.t;
-                    rec = Some(hit);
-                }
-                None => {}
+            if let Some(hit) = hittable.hit(r, t_min, closest_so_far) {
+                closest_so_far = hit.t;
+                rec = Some(hit);
             }
         }
         rec
