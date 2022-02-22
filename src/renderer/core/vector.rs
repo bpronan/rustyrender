@@ -1,7 +1,7 @@
 use std::f32;
 use std::ops;
 
-use super::math::min;
+use super::min;
 use rand::Rng;
 
 use serde::{Deserialize, Serialize};
@@ -47,6 +47,8 @@ impl Vec3 {
         }
     }
 
+    /// Returns whether the vector is close to zero. Useful
+    /// for checking before division.
     pub fn near_zero(&self) -> bool {
         let s: f32 = 1e-8;
         (f32::abs(self.x) < s) && (f32::abs(self.y) < s) && (f32::abs(self.z) < s)
@@ -106,6 +108,7 @@ pub fn random_in_hemisphere(n: &Vec3) -> Vec3 {
     }
 }
 
+/// Returns a random in the unit disk (no height).
 pub fn random_in_unit_disk() -> Vec3 {
     loop {
         let p = Vec3::new(

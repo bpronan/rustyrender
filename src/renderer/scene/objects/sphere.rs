@@ -45,14 +45,7 @@ impl Hittable for Sphere {
             }
         }
 
-        // update the hit record
-        // let mut rec = HitRecord::default();
-        // rec.t = root;
-        // rec.p = r.at(root);
-        // let outward_normal = (rec.p - self.center) / self.radius;
-        // rec.set_face_normal(r, &outward_normal);
-        // rec.material.swap(self.material);
-
+        // calculate the hit record
         let mut rec = HitRecord {
             p: r.at(root),
             t: root,
@@ -74,15 +67,16 @@ impl Hittable for Sphere {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::renderer::core::vector::Vec3;
-    use crate::renderer::scene::materials::lambert::Lambert;
+    use crate::renderer::core::{color, vector::Vec3};
 
     #[test]
     fn test_sphere_hit() {
         let s1 = Sphere {
             center: Point3::new(0.0, 0.0, -10.0),
             radius: 5.0,
-            material: Material::Lambert(Lambert::default()),
+            material: Material::Lambert {
+                albedo: color::WHITE,
+            },
         };
         let r = Ray::new(Point3::new(0.0, 0.0, 0.0), Vec3::new(0.0, 0.0, -1.0));
 

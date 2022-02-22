@@ -137,7 +137,9 @@ mod tests {
                 normal: Vec3::new(0.0, 0.0, 0.0),
                 t: f32::INFINITY,
                 front_face: false,
-                material: &Material::Default,
+                material: &Material::Lambert {
+                    albedo: color::WHITE,
+                },
             })
         }
 

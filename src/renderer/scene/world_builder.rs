@@ -1,7 +1,7 @@
 use crate::renderer::core::{color::Color, vector::Vec3};
 use crate::renderer::scene::{camera::CameraConfig, objects::sphere::Sphere};
 
-use super::materials::{dielectric::Dielectric, lambert::Lambert, metal::Metal, Material};
+use super::materials::Material;
 use super::world::Region;
 use rand::Rng;
 
@@ -9,9 +9,9 @@ use rand::Rng;
 pub fn random_scene() -> Region {
     let mut world = Region::new(Color::new(0.5, 0.7, 0.9));
 
-    let ground = Material::Lambert(Lambert {
+    let ground = Material::Lambert {
         albedo: Color::new(0.5, 0.5, 0.5),
-    });
+    };
     world.push(Box::new(Sphere {
         center: Vec3::new(0.0, -1000.0, 0.0),
         radius: 1000.0,
@@ -28,14 +28,14 @@ pub fn random_scene() -> Region {
                 let sphere_mat = if rand < 0.8 {
                     // lambert
                     let albedo = Vec3::random_range(0.0, 1.0) * Vec3::random_range(0.0, 1.0);
-                    Material::Lambert(Lambert { albedo })
+                    Material::Lambert { albedo }
                 } else if rand < 0.95 {
                     let albedo = Vec3::random_range(0.5, 1.0);
                     let fuzz = rand::thread_rng().gen_range(0.0..1.0);
 
-                    Material::Metal(Metal { albedo, fuzz })
+                    Material::Metal { albedo, fuzz }
                 } else {
-                    Material::Dielectric(Dielectric { ior: 1.5 })
+                    Material::Dielectric { ior: 1.5 }
                 };
 
                 world.push(Box::new(Sphere {
@@ -47,26 +47,26 @@ pub fn random_scene() -> Region {
         }
     }
 
-    let material = Material::Dielectric(Dielectric { ior: 1.5 });
+    let material = Material::Dielectric { ior: 1.5 };
     world.push(Box::new(Sphere {
         center: Vec3::new(0.0, 1.0, 0.0),
         radius: 1.0,
         material,
     }));
 
-    let material = Material::Lambert(Lambert {
+    let material = Material::Lambert {
         albedo: Vec3::new(0.4, 0.2, 0.1),
-    });
+    };
     world.push(Box::new(Sphere {
         center: Vec3::new(-4.0, 1.0, 0.0),
         radius: 1.0,
         material,
     }));
 
-    let material = Material::Metal(Metal {
+    let material = Material::Metal {
         albedo: Vec3::new(0.7, 0.6, 0.5),
         fuzz: 0.0,
-    });
+    };
     world.push(Box::new(Sphere {
         center: Vec3::new(4.0, 1.0, 0.0),
         radius: 1.0,

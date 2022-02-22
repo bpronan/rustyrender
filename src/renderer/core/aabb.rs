@@ -3,7 +3,7 @@ use crate::renderer::core::vector::Point3;
 
 use serde::{Deserialize, Serialize};
 
-use super::math::{max, min};
+use super::{max, min};
 
 #[derive(Copy, Clone, Debug, Serialize, Deserialize)]
 pub struct Aabb {

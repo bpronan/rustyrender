@@ -10,9 +10,6 @@ pub mod vector;
 /// A library containing the representation of a axis aligned bounding box
 pub mod aabb;
 
-// A library with math utility functions
-pub mod math;
-
 /// This macro takes an expression as an argument and will
 /// log to error and panic on debug only. This is useful for
 /// precondition checks for internal APIs.
@@ -37,6 +34,7 @@ pub fn clamp(x: f32, min: f32, max: f32) -> f32 {
     x
 }
 
+/// Clamps the pixel and converts it to linear space.
 #[inline]
 pub fn convert_pixel(pixel: vector::Vec3) -> (u8, u8, u8) {
     (
@@ -46,6 +44,7 @@ pub fn convert_pixel(pixel: vector::Vec3) -> (u8, u8, u8) {
     )
 }
 
+/// Writes a pixel to a buffer location
 macro_rules! write_pixel {
     ($pixel:expr, $out:expr, $location:expr) => {{
         let (r, g, b) = convert_pixel($pixel);
@@ -58,3 +57,32 @@ macro_rules! write_pixel {
 
 pub(crate) use debug_check;
 pub(crate) use write_pixel;
+
+/// Implementation of max since std::cmp::max doesn't work for f32
+macro_rules! max {
+    ($x: expr) => ($x);
+    ($x: expr, $($z: expr),+) => {{
+        let y = max!($($z),*);
+        if $x > y {
+            $x
+        } else {
+            y
+        }
+    }}
+}
+
+/// Implementation of max since std::cmp::max doesn't work for f32
+macro_rules! min {
+    ($x: expr) => ($x);
+    ($x: expr, $($z: expr),+) => {{
+        let y = min!($($z),*);
+        if $x < y {
+            $x
+        } else {
+            y
+        }
+    }}
+}
+
+pub(crate) use max;
+pub(crate) use min;
