@@ -1,3 +1,5 @@
+use std::sync::{mpsc, Arc};
+
 use crate::renderer::core::{color::Color, convert_pixel, debug_check, write_pixel};
 use crate::renderer::scene::world::Region;
 
@@ -42,6 +44,77 @@ pub fn render_threaded(
             write_pixel!(pixel, band, x);
         }
     });
+
+    Ok(())
+}
+
+/// Renders the multicore version of the algorithm using a set of n threads
+/// and a mpsc channel to collect the pixels into the output.
+///
+/// Parameters:
+/// * `context` - The render context that contains the information necessary to render the image.
+/// * `world` - The scene to render.
+/// * `img` - The image buffer to write to.
+pub fn render_threaded_naive(
+    context: &RenderContext,
+    world: &Region,
+    img: &mut [u8],
+    bounds: (u32, u32),
+    render_op: RenderPixelOp,
+) -> Result<(), ComputeError> {
+    // already covered by checks on the public api, but here to keep the internal behavior
+    // consistency
+    debug_check!(bounds.0 > 0);
+    debug_check!(bounds.1 > 0);
+
+    let ctx_arc = Arc::new(context);
+    let wrld_arc = Arc::new(world);
+
+    let w = ctx_arc.camera.film_width;
+    let h = ctx_arc.camera.film_height;
+
+    // we don't want to create more threads than slices
+    let threads = std::cmp::min(num_cpus::get() as u32, w);
+
+    let (tx, rx) = mpsc::channel();
+
+    crossbeam::scope(|scope| {
+        for n in 0..threads {
+            let lenx = w / threads;
+            let leny = h;
+            let start_x = n * lenx;
+            // leave the last thread to handle the left over if the math doesn't work out
+            let end_x = if n == threads - 1 { w } else { (n + 1) * lenx };
+
+            let world = wrld_arc.clone();
+            let ctx = ctx_arc.clone();
+            let tx = tx.clone();
+
+            scope.spawn(move |_| {
+                for x in start_x..end_x {
+                    for y in 0..leny {
+                        let pixel = render_op(&ctx, &world, x as usize, y as usize);
+
+                        let (r, g, b) = convert_pixel(pixel);
+                        tx.send((x, y, (r, g, b))).unwrap();
+                    }
+                }
+            });
+        }
+    })
+    .map_err(|source| {
+        error!("Thread error: {:?}", source);
+        ComputeError::ThreadPanicked
+    })?;
+
+    for _ in 0..(w * h) {
+        let (x, y, pixel) = rx.recv()?;
+
+        let location = (y * w) as usize + x as usize;
+        img[location * 3] = pixel.0;
+        img[location * 3 + 1] = pixel.1;
+        img[location * 3 + 2] = pixel.2;
+    }
 
     Ok(())
 }

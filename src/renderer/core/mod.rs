@@ -71,7 +71,7 @@ macro_rules! max {
     }}
 }
 
-/// Implementation of max since std::cmp::max doesn't work for f32
+/// Implementation of max since std::cmp::min doesn't work for f32
 macro_rules! min {
     ($x: expr) => ($x);
     ($x: expr, $($z: expr),+) => {{

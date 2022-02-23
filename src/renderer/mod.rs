@@ -26,6 +26,7 @@ pub enum ComputeEnv {
     Multicore,
     Cuda,
     Opencl,
+    SimpleThreaded,
 }
 
 #[derive(Error, Debug)]
@@ -156,6 +157,16 @@ pub fn render(
             info!("Executing OpenCL implementation.");
             gpurender::render_opencl(&context, world, pixels, bounds)?
         }
+        ComputeEnv::SimpleThreaded => {
+            info!("Executing naive multithreaded implementation.");
+            cpurender::render_threaded_naive(
+                &context,
+                world,
+                pixels,
+                bounds,
+                render_op::render_pixel,
+            )?
+        }
         _ => {
             info!("Executing Mulithreading implementation.");
             cpurender::render_threaded(&context, world, pixels, bounds, render_op::render_pixel)?
@@ -166,4 +177,16 @@ pub fn render(
     // post condition checks go here ;-)
 
     Ok(())
+}
+
+impl std::fmt::Display for ComputeEnv {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match *self {
+            ComputeEnv::Cuda => write!(f, "cuda"),
+            ComputeEnv::Naive => write!(f, "naive"),
+            ComputeEnv::Multicore => write!(f, "multicore"),
+            ComputeEnv::Opencl => write!(f, "opencl"),
+            ComputeEnv::SimpleThreaded => write!(f, "simple_threaded"),
+        }
+    }
 }

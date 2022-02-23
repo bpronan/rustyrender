@@ -28,6 +28,7 @@ Supported compute environments are:
     multicore   Parallelizes across cores on the CPU
     cuda        GP GPU based renderer using CUDA. Only supported on nVidia.
     opencl      OpenGL based renderer.
+    simplethreaded A naive threading implementation.
 
 Options:
     -h, --help          Show this message.
